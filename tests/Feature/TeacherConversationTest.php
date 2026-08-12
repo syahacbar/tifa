@@ -110,4 +110,19 @@ class TeacherConversationTest extends TestCase
         $this->assertStringContainsString('Pegawai Pemerintah dengan Perjanjian Kerja', $result['answer']);
         Http::assertSent(fn ($request) => str_contains($request['prompt'], 'PNS = Pegawai Negeri Sipil') && str_contains($request['prompt'], 'PPPK = Pegawai Pemerintah dengan Perjanjian Kerja'));
     }
+
+    public function test_safe_teacher_context_supports_followups_without_ollama(): void
+    {
+        $batch = TeacherImportBatch::create(['source_filename' => 'context.xlsx', 'source_checksum' => hash('sha256', 'context'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
+        foreach ([['SD','Bintuni','PNS','a'], ['SMP','Bintuni','PPPK','b'], ['SMP','Bintuni','PNS','c'], ['SMP','Manimeri','PPPK','d']] as [$sheet, $district, $status, $fingerprint]) TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => $sheet, 'source_row' => random_int(200000, 299999), 'source_fingerprint' => hash('sha256', uniqid('', true)), 'deduplication_fingerprint' => $fingerprint, 'school_resolution_status' => 'resolved', 'district' => $district, 'employment_status' => $status]);
+        $assistant = app(TifaAssistantService::class);
+        $first = $assistant->ask('Berapa guru SD di Bintuni?');
+        $second = $assistant->ask('Kalau SMP?', $first['teacher_context']);
+        $this->assertSame('SMP', $second['intent']['filters']['education_level']); $this->assertSame('bintuni', $second['intent']['filters']['district']);
+        $third = $assistant->ask('Yang PPPK berapa?', $second['teacher_context']);
+        $this->assertSame('PPPK', $third['intent']['filters']['employment_status']); $this->assertSame('SMP', $third['intent']['filters']['education_level']);
+        $breakdown = $assistant->ask('Tampilkan jumlah guru per distrik');
+        $top = $assistant->ask('Lima terbesar saja', $breakdown['teacher_context']);
+        $this->assertSame('district', $top['intent']['group_by']); $this->assertSame(5, $top['intent']['top_n']);
+    }
 }

@@ -18,3 +18,50 @@
         @apply bg-slate-50 text-slate-900 antialiased;
     }
 }
+
+@layer components {
+    .tifa-map .leaflet-control-zoom a {
+        @apply border-slate-200 bg-white/95 text-slate-700 shadow-sm;
+    }
+
+    .tifa-map .leaflet-control-attribution {
+        @apply bg-white/90 text-[9px] text-slate-500;
+    }
+
+    .tifa-map-legend {
+        @apply pointer-events-none absolute bottom-3 left-3 z-[500] rounded-xl border border-white/90 bg-white/90 px-3 py-2 text-[10px] text-slate-600 shadow-sm backdrop-blur;
+    }
+
+    .tifa-map .leaflet-tooltip.tifa-district-tooltip,
+    .tifa-map .leaflet-popup-content-wrapper {
+        @apply rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-md;
+    }
+
+    .tifa-map .leaflet-tooltip.tifa-district-tooltip::before {
+        @apply border-t-white;
+    }
+
+    .tifa-map .tifa-district-tooltip__name {
+        @apply text-xs font-bold leading-4 text-slate-950;
+    }
+
+    .tifa-map .tifa-district-tooltip__total {
+        @apply mt-1 text-sm font-black leading-4 text-sky-800;
+    }
+
+    .tifa-map .tifa-district-tooltip__meta {
+        @apply mt-1 text-[10px] font-medium leading-3 text-slate-700;
+    }
+
+    .tifa-map .tifa-district-tooltip__meta span {
+        @apply px-1 text-slate-400;
+    }
+
+    /* Keep keyboard focus visible as a polygon stroke, not the browser's rectangular SVG outline. */
+    .tifa-map path.leaflet-interactive:focus {
+        outline: none;
+        stroke: #0f172a !important;
+        stroke-width: 2.8px !important;
+        vector-effect: non-scaling-stroke;
+    }
+}

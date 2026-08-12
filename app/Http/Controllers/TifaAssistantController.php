@@ -15,10 +15,11 @@ class TifaAssistantController extends Controller
     {
         $validated = $request->validate([
             'question' => ['required', 'string', 'max:1000'],
+            'teacher_context' => ['nullable', 'array'],
         ]);
 
         try {
-            return response()->json($assistant->ask($validated['question']));
+            return response()->json($assistant->ask($validated['question'], $validated['teacher_context'] ?? null));
         } catch (OllamaException) {
             return response()->json(['message' => 'Layanan Ollama tidak tersedia.'], 503);
         } catch (TifaIntentException) {

@@ -51,6 +51,96 @@ class TifaDataService
         return self::RANKING_METRICS;
     }
 
+    /** @return array<string, mixed> */
+    public function homepageSummary(): array
+    {
+        $dataset = Dataset::current();
+        $levels = ['KB', 'TK', 'SD', 'SMP', 'SMA', 'SMK'];
+        if ($dataset === null) {
+            return ['available' => false, 'kpis' => ['total_schools' => null, 'public_schools' => null, 'private_schools' => null, 'districts' => $this->administrativeDistrictCount(), 'districts_with_schools' => null], 'levels' => array_fill_keys($levels, null), 'other_levels' => null, 'dataset' => null];
+        }
+        $schools = $dataset->schools();
+        $byLevel = (clone $schools)->selectRaw('education_level, COUNT(*) as total')->groupBy('education_level')->pluck('total', 'education_level');
+        $levelSummary = collect($levels)->mapWithKeys(fn (string $level) => [$level => (int) ($byLevel[$level] ?? 0)])->all();
+        $total = $schools->count();
+        $public = (clone $schools)->whereRaw('LOWER(TRIM(status)) = ?', ['negeri'])->count();
+        $private = (clone $schools)->whereRaw('LOWER(TRIM(status)) = ?', ['swasta'])->count();
+        $districtsWithSchools = $schools->distinct('district')->count('district');
+        return ['available' => true, 'kpis' => ['total_schools' => $total, 'public_schools' => $public, 'private_schools' => $private, 'districts' => $this->administrativeDistrictCount() ?? $districtsWithSchools, 'districts_with_schools' => $districtsWithSchools], 'levels' => $levelSummary, 'other_levels' => $total - array_sum($levelSummary), 'dataset' => ['name' => $dataset->name, 'reference_period' => $dataset->reference_period, 'source_date' => $dataset->published_at?->toDateString()]];
+    }
+
+    private function administrativeDistrictCount(): ?int
+    {
+        $metadata = json_decode((string) @file_get_contents(resource_path('geojson/teluk-bintuni-districts.big.metadata.json')), true);
+        $featureCount = $metadata['feature_count'] ?? null;
+
+        return is_int($featureCount) && $featureCount > 0 ? $featureCount : null;
+    }
+
+    /** @return array<string, mixed> */
+    public function homepageDistrictSummary(): array
+    {
+        $dataset = Dataset::current();
+        $levels = ['KB', 'TK', 'SD', 'SMP', 'SMA', 'SMK'];
+
+        if ($dataset === null) {
+            return [
+                'available' => false,
+                'districts' => [],
+                'null_or_empty_districts' => null,
+                'dataset' => null,
+            ];
+        }
+
+        $schools = $dataset->schools();
+        $nullOrEmptyDistricts = (clone $schools)
+            ->where(static fn (Builder $query) => $query->whereNull('district')->orWhereRaw("TRIM(district) = ''"))
+            ->count();
+
+        $districtQuery = (clone $schools)
+            ->whereNotNull('district')
+            ->whereRaw("TRIM(district) <> ''")
+            ->select('district')
+            ->selectRaw('COUNT(*) as total_schools')
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(status)) = 'negeri' THEN 1 ELSE 0 END) as public_schools")
+            ->selectRaw("SUM(CASE WHEN LOWER(TRIM(status)) = 'swasta' THEN 1 ELSE 0 END) as private_schools");
+
+        foreach ($levels as $level) {
+            $districtQuery->selectRaw("SUM(CASE WHEN education_level = '{$level}' THEN 1 ELSE 0 END) as level_".strtolower($level));
+        }
+
+        $districts = $districtQuery
+            ->groupBy('district')
+            ->orderByDesc('total_schools')
+            ->orderBy('district')
+            ->get()
+            ->map(function ($district) use ($levels): array {
+                return [
+                    // The stored value is intentionally retained as the future map/filter key.
+                    'identifier' => $district->district,
+                    'name' => $district->district,
+                    'total_schools' => (int) $district->total_schools,
+                    'public_schools' => (int) $district->public_schools,
+                    'private_schools' => (int) $district->private_schools,
+                    'levels' => collect($levels)->mapWithKeys(
+                        fn (string $level) => [$level => (int) $district->{'level_'.strtolower($level)}]
+                    )->all(),
+                ];
+            })
+            ->all();
+
+        return [
+            'available' => true,
+            'districts' => $districts,
+            'null_or_empty_districts' => $nullOrEmptyDistricts,
+            'dataset' => [
+                'name' => $dataset->name,
+                'reference_period' => $dataset->reference_period,
+                'source_date' => $dataset->published_at?->toDateString(),
+            ],
+        ];
+    }
+
     /**
      * Jalankan agregasi atau query analitik pada dataset aktif.
      *

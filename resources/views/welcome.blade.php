@@ -1,107 +1,53 @@
 <x-layouts.app title="TIFA">
-    <section x-data="tifaAssistant()" x-init="init()" class="relative overflow-hidden">
-        <div aria-hidden="true" class="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_20%_10%,rgba(186,230,253,.9),transparent_30%),radial-gradient(circle_at_80%_25%,rgba(207,250,254,.9),transparent_27%),linear-gradient(to_bottom,#f0f9ff,transparent)]"></div>
+    <section x-data="tifaAssistant()" x-init="init()" class="relative min-h-full overflow-hidden bg-slate-50 lg:h-full">
+        <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_10%_0%,rgba(186,230,253,.75),transparent_28%),radial-gradient(circle_at_90%_10%,rgba(207,250,254,.8),transparent_25%),linear-gradient(135deg,#f8fcff_0%,#f0f9ff_48%,#f8fafc_100%)]"></div>
 
-        <div class="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-16 lg:px-8 lg:py-20">
-            <div class="grid items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
-                <div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-semibold tracking-wide text-sky-800 shadow-sm">
-                        <span class="size-2 rounded-full bg-emerald-500"></span>
-                        LAYANAN INFORMASI PENDIDIKAN
+        <div class="mx-auto grid min-h-full max-w-[1600px] gap-4 px-4 py-4 sm:px-6 lg:h-full lg:grid-cols-[.72fr_1fr] lg:grid-rows-[10.5rem_minmax(0,1fr)] lg:gap-4 lg:px-6 lg:py-4 xl:px-8">
+            <section class="flex min-h-0 flex-col rounded-[1.75rem] border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-30px_rgba(14,116,144,.35)] backdrop-blur lg:row-span-2 lg:p-6" aria-label="Asisten TIFA">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold tracking-[.12em] text-emerald-700"><span class="size-1.5 rounded-full bg-emerald-500"></span>TIFA SIAP MELAYANI</div>
+                        <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">Halo, saya TIFA.</h1>
+                        <p class="mt-2 max-w-lg text-sm leading-6 text-slate-600">Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni untuk informasi pendidikan yang cepat dan jelas.</p>
                     </div>
-                    <h1 class="mt-6 text-5xl font-black tracking-tight text-slate-950 sm:text-6xl">TIFA</h1>
-                    <p class="mt-4 max-w-xl text-xl font-medium leading-8 text-slate-700 sm:text-2xl">
-                        Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni
-                    </p>
-                    <p class="mt-5 max-w-xl text-base leading-7 text-slate-600">
-                        Tanyakan ringkasan data sekolah, peserta didik, tenaga pendidik, dan sarana pendidikan secara cepat dengan sumber data yang jelas.
-                    </p>
-
-                    <div class="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-600">
-                        <span class="flex items-center gap-2"><span class="grid size-6 place-items-center rounded-full bg-sky-100 text-sky-700">✓</span> Berbasis data Dapodik</span>
-                        <span class="flex items-center gap-2"><span class="grid size-6 place-items-center rounded-full bg-cyan-100 text-cyan-700">✓</span> Jawaban terverifikasi</span>
-                    </div>
+                    <div class="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 text-xl font-black text-white shadow-lg shadow-sky-200">T</div>
                 </div>
 
-                <aside class="relative rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_24px_70px_-25px_rgba(14,116,144,.35)] backdrop-blur sm:p-7" aria-label="Panduan singkat TIFA">
-                    <div class="absolute -right-3 -top-3 grid size-16 place-items-center rounded-3xl bg-amber-300 text-2xl shadow-lg shadow-amber-100" aria-hidden="true">✦</div>
-                    <p class="text-sm font-bold uppercase tracking-[.16em] text-sky-700">Mulai dari data</p>
-                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Apa yang ingin Anda ketahui?</h2>
-                    <p class="mt-3 text-sm leading-6 text-slate-600">Gunakan pertanyaan sederhana. TIFA akan menampilkan angka dan sumber dataset yang digunakan.</p>
-                    <div class="mt-6 grid grid-cols-2 gap-3">
-                        <div class="rounded-2xl bg-sky-50 p-4"><span class="block text-lg font-bold text-sky-800">Sekolah</span><span class="text-xs text-slate-500">Jenjang & distrik</span></div>
-                        <div class="rounded-2xl bg-cyan-50 p-4"><span class="block text-lg font-bold text-cyan-800">Siswa</span><span class="text-xs text-slate-500">Laki-laki & perempuan</span></div>
-                    </div>
-                </aside>
-            </div>
-
-            <div class="mx-auto mt-12 max-w-4xl rounded-[2rem] border border-sky-100 bg-white p-5 shadow-xl shadow-sky-100/60 sm:p-8">
-                <form @submit.prevent="ask()" class="space-y-4" aria-label="Form pertanyaan TIFA">
-                    <label for="question" class="block text-base font-bold text-slate-900">Ajukan pertanyaan Anda</label>
-                    <div class="flex flex-col gap-3 sm:flex-row">
-                        <input x-ref="question" x-model="question" id="question" type="text" maxlength="1000" autocomplete="off" placeholder="Contoh: Berapa jumlah SD di Kabupaten Teluk Bintuni?" class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100" :disabled="isLoading">
-                        <button x-cloak x-show="voice?.recognitionSupported" type="button" @click="voice.startListening()" :aria-pressed="voice?.isListening" aria-label="Ajukan pertanyaan dengan suara" class="inline-flex min-h-14 items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 px-4 text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isLoading || voice?.isListening">
-                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg>
-                            <span class="sr-only">Mulai input suara</span>
-                        </button>
-                        <button type="submit" class="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 py-3 font-bold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400" :disabled="isLoading">
-                            <svg x-show="!isLoading" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                            <svg x-cloak x-show="isLoading" class="size-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4Z"/></svg>
-                            <span x-text="isLoading ? 'TIFA sedang mencari...' : 'Tanya TIFA'"></span>
-                        </button>
+                <form @submit.prevent="ask()" class="mt-5" aria-label="Form pertanyaan TIFA">
+                    <label for="question" class="mb-2 block text-sm font-bold text-slate-800">Apa yang ingin Anda ketahui?</label>
+                    <div class="flex gap-2">
+                        <input x-ref="question" x-model="question" id="question" type="text" maxlength="1000" autocomplete="off" placeholder="Tulis pertanyaan pendidikan..." class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100" :disabled="isLoading">
+                        <button x-cloak x-show="voice?.recognitionSupported" type="button" @click="voice.startListening()" :aria-pressed="voice?.isListening" aria-label="Ajukan pertanyaan dengan suara" class="grid size-12 shrink-0 place-items-center rounded-2xl border border-sky-200 bg-sky-50 text-sky-700 transition hover:bg-sky-100 disabled:opacity-60" :disabled="isLoading || voice?.isListening"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg></button>
+                        <button type="submit" class="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-bold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-800 disabled:bg-sky-400" :disabled="isLoading"><svg x-show="!isLoading" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/></svg><svg x-cloak x-show="isLoading" class="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/></svg><span class="hidden sm:inline" x-text="isLoading ? 'Memproses' : 'Tanya'">Tanya</span></button>
                     </div>
                 </form>
 
-                <p x-cloak x-show="voice && !voice.recognitionSupported" class="mt-3 text-sm text-slate-500">Input suara belum didukung browser ini. Anda tetap dapat mengetik pertanyaan.</p>
-                <p x-cloak x-show="voice?.error" class="mt-3 text-sm font-medium text-rose-700" role="alert" x-text="voice?.error"></p>
-
-                <div class="mt-5 border-t border-slate-100 pt-5">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Pertanyaan cepat</p>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <template x-for="item in quickQuestions" :key="item">
-                            <button type="button" @click="ask(item)" :disabled="isLoading" class="rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-left text-sm font-medium text-sky-800 transition hover:border-sky-300 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60" x-text="item"></button>
-                        </template>
-                    </div>
+                <div class="mt-4">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Pertanyaan cepat</p>
+                    <div class="mt-2 flex flex-wrap gap-2"><template x-for="item in quickQuestions" :key="item"><button type="button" @click="ask(item)" :disabled="isLoading" class="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-left text-xs font-medium text-sky-800 transition hover:border-sky-300 hover:bg-sky-100 disabled:opacity-60" x-text="item"></button></template></div>
                 </div>
-            </div>
 
-            <section x-cloak x-show="voice?.isListening" x-transition class="mx-auto mt-8 max-w-4xl rounded-3xl border border-cyan-200 bg-cyan-50 p-5 sm:flex sm:items-center sm:justify-between" aria-live="assertive">
-                <div class="flex items-center gap-3"><span class="relative flex size-11"><span class="absolute inline-flex size-full animate-ping rounded-full bg-cyan-300 opacity-60"></span><span class="relative grid size-11 place-items-center rounded-full bg-cyan-600 text-white"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></span></span><div><p class="font-bold text-cyan-950">Mendengarkan...</p><p class="text-sm text-cyan-800">Ucapkan pertanyaan Anda dengan jelas.</p></div></div>
-                <button type="button" @click="voice.cancelListening()" class="mt-4 rounded-xl border border-cyan-300 bg-white px-4 py-2 text-sm font-bold text-cyan-800 transition hover:bg-cyan-100 sm:mt-0">Batalkan</button>
-            </section>
-
-            <section x-cloak x-show="isLoading" x-transition class="mx-auto mt-8 max-w-4xl rounded-3xl border border-sky-100 bg-white p-6 text-center shadow-sm" aria-live="polite">
-                <div class="mx-auto grid size-12 place-items-center rounded-2xl bg-sky-100 text-sky-700"><svg class="size-6 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg></div>
-                <p class="mt-3 font-bold text-slate-900">TIFA sedang menyiapkan jawaban</p>
-                <p class="mt-1 text-sm text-slate-500">Memahami pertanyaan dan memeriksa dataset aktif.</p>
-            </section>
-
-            <section x-cloak x-show="error" x-transition class="mx-auto mt-8 max-w-4xl rounded-3xl border border-rose-200 bg-rose-50 p-5 sm:p-6" role="alert">
-                <div class="flex gap-3"><span class="grid size-9 shrink-0 place-items-center rounded-full bg-rose-100 font-bold text-rose-700">!</span><div><h2 class="font-bold text-rose-950">TIFA belum dapat menjawab</h2><p class="mt-1 text-sm leading-6 text-rose-800" x-text="error"></p></div></div>
-            </section>
-
-            <section x-cloak x-show="response" x-transition.opacity class="mx-auto mt-8 max-w-4xl" aria-live="polite">
-                <div class="overflow-hidden rounded-[2rem] border border-sky-100 bg-white shadow-xl shadow-sky-100/60">
-                    <div class="bg-gradient-to-r from-sky-700 to-cyan-600 px-6 py-5 text-white sm:px-8">
-                        <p class="text-xs font-bold uppercase tracking-[.16em] text-sky-100">Jawaban TIFA</p>
-                        <p class="mt-2 text-lg font-semibold leading-7" x-text="response?.answer"></p>
-                    </div>
-                    <div class="grid gap-5 p-5 sm:p-8 md:grid-cols-[.9fr_1.1fr]">
-                        <div class="rounded-3xl bg-sky-50 p-6" x-show="response?.visualization === 'kpi'">
-                            <p class="text-xs font-bold uppercase tracking-[.15em] text-sky-700">Hasil utama</p>
-                            <p class="mt-3 text-5xl font-black tracking-tight text-slate-950" x-text="formattedValue()"></p>
-                            <p class="mt-2 text-sm font-medium text-slate-600" x-text="response?.intent?.action?.replaceAll('_', ' ')"></p>
-                        </div>
-                        <div class="rounded-3xl border border-slate-100 p-6">
-                            <p class="text-xs font-bold uppercase tracking-[.15em] text-slate-500">Sumber data</p>
-                            <dl class="mt-4 space-y-3 text-sm"><div><dt class="text-slate-500">Dataset</dt><dd class="font-semibold text-slate-900" x-text="response?.source?.dataset"></dd></div><div><dt class="text-slate-500">Periode referensi</dt><dd class="font-semibold text-slate-900" x-text="response?.source?.reference_period"></dd></div><div><dt class="text-slate-500">Tanggal sumber</dt><dd class="font-semibold text-slate-900" x-text="response?.source?.source_date"></dd></div></dl>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-3 border-t border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                        <p class="text-sm text-slate-500">Angka ditampilkan dari dataset aktif TIFA.</p>
-                        <div class="flex flex-wrap gap-2"><button x-cloak x-show="voice?.synthesisSupported" type="button" @click="voice.speak(response?.answer)" class="rounded-xl border border-cyan-200 px-4 py-2 text-sm font-bold text-cyan-700 transition hover:bg-cyan-50"><span x-text="voice?.isSpeaking ? 'Membacakan...' : 'Ulangi Suara'"></span></button><button x-cloak x-show="voice?.isSpeaking" type="button" @click="voice.stopSpeaking()" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hentikan Suara</button><button type="button" @click="askAgain()" class="rounded-xl border border-sky-200 px-4 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Tanya Lagi</button></div>
-                    </div>
+                <div class="mt-4 min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/80">
+                    <div x-cloak x-show="voice?.isListening" class="flex h-full items-center gap-3 p-5 text-cyan-900"><span class="relative flex size-10"><span class="absolute inline-flex size-full animate-ping rounded-full bg-cyan-300 opacity-60"></span><span class="relative grid size-10 place-items-center rounded-full bg-cyan-600 text-white">♫</span></span><div><p class="font-bold">Mendengarkan...</p><p class="text-sm">Ucapkan pertanyaan Anda dengan jelas.</p><button type="button" @click="voice.cancelListening()" class="mt-2 text-xs font-bold text-cyan-700">Batalkan</button></div></div>
+                    <div x-cloak x-show="isLoading" class="flex h-full items-center justify-center p-5 text-center"><div><div class="mx-auto grid size-10 place-items-center rounded-2xl bg-sky-100 text-sky-700">+</div><p class="mt-2 text-sm font-bold text-slate-900">TIFA sedang menyiapkan jawaban</p></div></div>
+                    <div x-cloak x-show="error" class="h-full overflow-y-auto p-5" role="alert"><p class="font-bold text-rose-800">TIFA belum dapat menjawab</p><p class="mt-1 text-sm leading-6 text-rose-700" x-text="error"></p></div>
+                    <div x-cloak x-show="response" class="flex h-full flex-col" aria-live="polite"><div class="bg-gradient-to-r from-sky-700 to-cyan-600 px-5 py-4 text-white"><p class="text-[11px] font-bold uppercase tracking-[.14em] text-sky-100">Jawaban TIFA</p><p class="mt-1 text-sm font-semibold leading-6" x-text="response?.answer"></p></div><div class="min-h-0 flex-1 overflow-y-auto p-4"><div x-show="response?.visualization === 'kpi'" class="rounded-2xl bg-sky-50 p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-sky-700">Hasil utama</p><p class="mt-1 text-4xl font-black text-slate-950" x-text="formattedValue()"></p></div><dl class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600"><div><dt>Periode</dt><dd class="font-semibold text-slate-900" x-text="response?.source?.reference_period"></dd></div><div><dt>Sumber</dt><dd class="font-semibold text-slate-900" x-text="response?.source?.dataset ?? 'Data terintegrasi TIFA'"></dd></div></dl></div><div class="border-t border-slate-100 px-4 py-3"><button type="button" @click="askAgain()" class="text-xs font-bold text-sky-700">Tanya Lagi</button></div></div>
+                    <div x-show="!response && !isLoading && !error && !voice?.isListening" class="flex h-full items-center justify-center p-8 text-center"><div><div class="mx-auto grid size-11 place-items-center rounded-2xl bg-sky-100 text-xl text-sky-700">✦</div><p class="mt-3 text-sm font-bold text-slate-700">Ruang jawaban TIFA</p><p class="mt-1 text-xs leading-5 text-slate-500">Hasil pertanyaan Anda akan tampil di sini.</p></div></div>
                 </div>
+                <p x-cloak x-show="voice && !voice.recognitionSupported" class="mt-2 text-xs text-slate-500">Input suara belum didukung browser ini; Anda tetap dapat mengetik.</p>
+                <p x-cloak x-show="voice?.error" class="mt-2 text-xs font-medium text-rose-700" x-text="voice?.error"></p>
+            </section>
+
+            <section class="rounded-[1.75rem] border border-white/80 bg-white/85 p-4 shadow-[0_18px_50px_-30px_rgba(14,116,144,.25)] backdrop-blur lg:p-4" aria-label="Statistik pendidikan">
+                <div class="flex items-center justify-between"><div><p class="text-[11px] font-bold uppercase tracking-[.15em] text-sky-700">Ringkasan pendidikan</p><h2 class="mt-1 text-lg font-bold text-slate-900">Gambaran layanan hari ini</h2></div><span class="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700">Dataset aktif</span></div>
+                <div class="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4"><div class="rounded-2xl bg-sky-50 p-2.5"><p class="text-[11px] text-slate-500">Total Sekolah</p><p class="mt-0.5 text-xl font-black text-slate-900">{{ $educationSummary['kpis']['total_schools'] ?? '—' }}</p></div><div class="rounded-2xl bg-emerald-50 p-2.5"><p class="text-[11px] text-slate-500">Negeri</p><p class="mt-0.5 text-xl font-black text-slate-900">{{ $educationSummary['kpis']['public_schools'] ?? '—' }}</p></div><div class="rounded-2xl bg-amber-50 p-2.5"><p class="text-[11px] text-slate-500">Swasta</p><p class="mt-0.5 text-xl font-black text-slate-900">{{ $educationSummary['kpis']['private_schools'] ?? '—' }}</p></div><div class="rounded-2xl bg-cyan-50 p-2.5"><p class="text-[11px] text-slate-500">Distrik</p><p class="mt-0.5 text-xl font-black text-slate-900">{{ $educationSummary['kpis']['districts'] ?? '—' }}</p><p class="mt-0.5 text-[9px] leading-3 text-slate-500">{{ $educationSummary['kpis']['districts_with_schools'] ?? '—' }} distrik memiliki sekolah</p></div></div>
+                <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 pb-1"><div class="flex min-w-0 flex-1 flex-wrap gap-1.5">@foreach ($educationSummary['levels'] as $level => $total)<span class="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-600">{{ $level }} <span class="text-slate-900">{{ $total ?? '—' }}</span></span>@endforeach</div><p class="min-w-0 text-left text-[10px] leading-4 text-slate-500 sm:ml-auto sm:max-w-[20rem] sm:text-right">{{ $educationSummary['available'] ? ($educationSummary['dataset']['reference_period'] ?? 'Dataset aktif') : 'Data belum tersedia' }}</p></div>
+            </section>
+
+            <section class="grid min-h-[23rem] gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_17rem]" aria-label="Sebaran pendidikan">
+                <script id="tifa-district-summary" type="application/json">@json($districtSummary['districts'])</script>
+                <div class="flex min-h-[20rem] min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-sky-100 bg-sky-50 shadow-[0_18px_50px_-30px_rgba(14,116,144,.25)]" aria-label="Peta Kabupaten Teluk Bintuni"><div class="shrink-0 border-b border-sky-100 bg-white/90 px-5 py-3"><p class="text-[11px] font-bold uppercase tracking-[.15em] text-sky-700">Peta pendidikan</p><h2 class="mt-0.5 text-lg font-bold text-slate-900">Peta Sebaran Sekolah</h2></div><div x-data="tifaEducationMap()" x-init="init()" class="tifa-map relative min-h-0 flex-1"><div x-ref="map" class="absolute inset-0" role="application" aria-label="Peta distrik Kabupaten Teluk Bintuni"></div><div class="tifa-map-legend"><p class="font-bold text-slate-700">Jumlah sekolah</p><div class="mt-1.5 flex items-center gap-1"><span class="size-3 rounded-sm border border-slate-300 bg-slate-300"></span><span>0</span><span class="size-3 rounded-sm bg-sky-200"></span><span>1–5</span><span class="size-3 rounded-sm bg-sky-400"></span><span>6–20</span><span class="size-3 rounded-sm bg-sky-700"></span><span>&gt;40</span></div></div></div></div>
+                <aside x-data="tifaDistrictSummary()" x-init="init()" class="flex min-h-0 flex-col rounded-[1.75rem] border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-30px_rgba(14,116,144,.25)]"><p class="text-[11px] font-bold uppercase tracking-[.15em] text-sky-700">Sebaran Sekolah</p><div class="flex items-baseline justify-between gap-2"><h2 class="mt-1 text-lg font-bold text-slate-900">Ringkasan Distrik</h2><span class="text-[10px] font-semibold text-slate-500" x-text="districts.length + ' distrik'">{{ count($districtSummary['districts']) }} distrik</span></div><div x-ref="districtList" class="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1"><template x-for="district in districts" :key="district.identifier"><button type="button" @click="selectDistrict(district.identifier)" :data-district-identifier="district.identifier" :class="selectedIdentifier === district.identifier ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-100' : 'border-slate-100 bg-slate-50 hover:border-sky-200'" class="block w-full rounded-xl border px-3 py-2.5 text-left transition"><div class="flex items-start justify-between gap-2"><p class="min-w-0 text-xs font-bold leading-4 text-slate-800" x-text="district.name"></p><span class="shrink-0 text-lg font-black leading-4 text-sky-800" x-text="district.total_schools"></span></div><p x-show="district.has_school_data !== false" class="mt-1 text-[10px] text-slate-500"><span x-text="district.public_schools"></span> Negeri <span class="px-1 text-slate-300">•</span> <span x-text="district.private_schools"></span> Swasta</p><p x-show="district.has_school_data === false" class="mt-1 text-[10px] text-slate-500">Tidak ada sekolah pada dataset aktif</p></button></template></div><p x-cloak x-show="mapUnavailable" class="mt-3 text-[10px] leading-4 text-amber-700">Boundary distrik belum dapat dimuat.</p>@if (($districtSummary['null_or_empty_districts'] ?? 0) > 0)<p class="mt-3 text-[10px] leading-4 text-amber-700">{{ $districtSummary['null_or_empty_districts'] }} sekolah belum memiliki distrik.</p>@endif</aside>
             </section>
         </div>
     </section>

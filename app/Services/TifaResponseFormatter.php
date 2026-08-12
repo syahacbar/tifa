@@ -17,12 +17,19 @@ class TifaResponseFormatter
                 $top = $records[0];
                 return $source.', '.$dimension.' dengan '.$metric.' terbanyak adalah '.$top['label'].' sebanyak '.number_format($top['value'], 0, ',', '.').'.';
             }
-            return $source.', berikut '.count($records).' '.$dimension.' dengan '.$metric.' terbanyak: '.$this->rows($records, $metric).'.';
+            return $this->withTeacherQuality($source.', berikut '.count($records).' '.$dimension.' dengan '.$metric.' terbanyak: '.$this->rows($records, $metric).'.', $data);
         }
         if ($data['group_by'] === 'employment_status' && count($records) === 2) {
             return $source.', terdapat '.$this->rows($records, $metric).'.';
         }
-        return $source.', berikut sebaran '.$metric.' berdasarkan '.$dimension.': '.$this->rows($records, $metric).'.';
+        return $this->withTeacherQuality($source.', berikut sebaran '.$metric.' berdasarkan '.$dimension.': '.$this->rows($records, $metric).'.', $data);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function withTeacherQuality(string $answer, array $data): string
+    {
+        return ($data['group_by'] ?? null) === 'school' && ! ($data['quality']['complete_for_requested_dimension'] ?? true)
+            ? $answer.' Catatan: statistik per sekolah belum mencakup beberapa penugasan yang belum terhubung ke sekolah master.' : $answer;
     }
 
     /** @param array<string, mixed> $filters */

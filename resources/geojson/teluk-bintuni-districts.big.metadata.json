@@ -1,0 +1,25 @@
+{
+  "title": "Teluk Bintuni district boundaries",
+  "provider": "Badan Informasi Geospasial",
+  "service_url": "https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/Administrasi_AR_Kecamatan_10K/MapServer",
+  "query_url": "https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/Administrasi_AR_Kecamatan_10K/MapServer/0/query?where=KDPKAB%20%3D%20%2792.06%27&outFields=NAMOBJ%2CWADMKC%2CWADMKK%2CWADMPR%2CKDCPUM%2CKDPKAB%2CKDBBPS%2CKDCBPS%2CTIPADM&returnGeometry=true&outSR=4326&f=geojson",
+  "retrieved_at": "2026-08-12T13:07:13+09:00",
+  "service_edition": "Batas wilayah administrasi kecamatan edisi 2022",
+  "layer_id": 0,
+  "layer_name": "RBI10K.ADMINISTRASI_KEC_AR",
+  "geometry_type": "esriGeometryPolygon",
+  "spatial_reference": "EPSG:4326",
+  "query_fields": {
+    "regency_code": "KDPKAB",
+    "regency_name": "WADMKK",
+    "district_name": "WADMKC",
+    "district_code": "KDCPUM"
+  },
+  "query_filter": "KDPKAB = '92.06'",
+  "feature_count": 24,
+  "sha256": "b53a32ac9ee4ff4dd2680a6414f938fe7a0b9987f0cdc33e6687ba2a2e740870",
+  "notes": [
+    "Snapshot is the unmodified GeoJSON response from the BIG service.",
+    "Service metadata notes that some undefined island/lake areas and district-to-regency alignment issues remain in the 2022 edition."
+  ]
+}

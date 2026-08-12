@@ -9,10 +9,10 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-sky-50">
-        <div class="flex min-h-screen flex-col">
+    <body class="min-h-screen bg-sky-50 lg:h-screen lg:overflow-hidden">
+        <div class="flex min-h-screen flex-col lg:h-screen">
             <header class="border-b border-sky-100 bg-white/90 backdrop-blur" x-data="{ open: false }">
-                <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8" aria-label="Navigasi utama">
+                <nav class="mx-auto flex max-w-[1600px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Navigasi utama">
                     <a href="{{ route('home') }}" class="flex items-center gap-3">
                         <span class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 font-bold text-white shadow-lg shadow-sky-200">T</span>
                         <span>
@@ -37,11 +37,11 @@
                 </div>
             </header>
 
-            <main class="flex-1">
+            <main class="flex-1 lg:min-h-0">
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-sky-100 bg-white">
+            <footer class="border-t border-sky-100 bg-white lg:hidden">
                 <div class="mx-auto max-w-7xl px-6 py-5 text-sm text-slate-500 lg:px-8">
                     &copy; {{ date('Y') }} Dinas Pendidikan Kabupaten Teluk Bintuni
                 </div>

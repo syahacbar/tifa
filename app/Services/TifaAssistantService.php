@@ -10,6 +10,8 @@ class TifaAssistantService
         private TifaResponseFormatter $formatter,
         private TeacherAnalyticsIntentService $teacherIntent,
         private TeacherAnalyticsService $teacherAnalytics,
+        private TeacherDataTool $teacherTool,
+        private TeacherAnalyticsContextService $teacherContext,
         private TifaPrivacyGuard $privacyGuard,
         private GeneralTeacherConversationService $generalTeacher,
         private OfficialTerminologyService $terminology,
@@ -18,17 +20,19 @@ class TifaAssistantService
     /**
      * @return array<string, mixed>
      */
-    public function ask(string $question): array
+    public function ask(string $question, ?array $context = null): array
     {
         if ($definition = $this->terminology->directDefinition($question)) {
             return ['question' => $question, 'intent' => ['type' => 'official_terminology'], 'answer' => $definition, 'data' => null, 'visualization' => null, 'source' => null];
         }
         if ($this->privacyGuard->blocks($question)) return $this->privacyGuard->response($question);
-        $teacher = $this->teacherIntent->parse($question);
+        $teacher = $this->teacherIntent->parse($question, $context);
         if ($teacher !== null) {
             if (isset($teacher['blocked'])) throw new \App\Exceptions\TifaIntentException('TIFA saat ini hanya menyediakan statistik agregat guru, bukan data pribadi individual.');
-            $data = $this->teacherAnalytics->query($teacher);
-            return ['question' => $question, 'intent' => ['type' => 'teacher_analytics', ...$teacher], 'answer' => $this->formatter->formatTeacher($data), 'data' => isset($data['value']) ? ['value' => $data['value']] : $data['data'], 'visualization' => $data['visualization'], 'source' => ['reference_period' => $data['batch']['source_period'], 'authoritative' => true]];
+            $tool = $this->teacherTool->execute($teacher);
+            $data = $tool['presentation'];
+            $data['quality'] = $tool['quality'];
+            return ['question' => $question, 'intent' => ['type' => 'teacher_analytics', ...$teacher], 'answer' => $this->formatter->formatTeacher($data), 'data' => $tool['data'], 'visualization' => $data['visualization'], 'source' => ['reference_period' => $tool['provenance']['reference_period'], 'authoritative' => true], 'teacher_context' => $this->teacherContext->fromIntent($teacher)];
         }
         if ($this->generalTeacher->handles($question)) {
             return ['question' => $question, 'intent' => ['type' => 'general_conversation'], 'answer' => $this->generalTeacher->answer($question), 'data' => null, 'visualization' => null, 'source' => null];
