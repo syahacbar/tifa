@@ -48,6 +48,10 @@ class HomepageEducationSummaryTest extends TestCase
         $this->assertSame(1, $summary['districts'][0]['private_schools']);
         $this->assertSame(1, $summary['districts'][0]['levels']['SD']);
         $this->assertSame(1, $summary['districts'][0]['levels']['TK']);
+        $this->assertSame(1, $summary['districts'][0]['levels_by_status']['Negeri']['SD']);
+        $this->assertSame(1, $summary['districts'][0]['levels_by_status']['Swasta']['TK']);
+        $this->assertSame('SD', $summary['districts'][0]['schools'][0]['education_level']);
+        $this->assertArrayHasKey('npsn', $summary['districts'][0]['schools'][0]);
         $this->assertSame(1, $summary['districts'][1]['levels']['SMP']);
     }
 

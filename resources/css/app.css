@@ -28,10 +28,6 @@
         @apply bg-white/90 text-[9px] text-slate-500;
     }
 
-    .tifa-map-legend {
-        @apply pointer-events-none absolute bottom-3 left-3 z-[500] rounded-xl border border-white/90 bg-white/90 px-3 py-2 text-[10px] text-slate-600 shadow-sm backdrop-blur;
-    }
-
     .tifa-map .leaflet-tooltip.tifa-district-tooltip,
     .tifa-map .leaflet-popup-content-wrapper {
         @apply rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-md;
@@ -55,6 +51,67 @@
 
     .tifa-map .tifa-district-tooltip__meta span {
         @apply px-1 text-slate-400;
+    }
+
+    .tifa-map .leaflet-popup.tifa-district-popup-shell .leaflet-popup-content-wrapper {
+        @apply p-0;
+    }
+
+    .tifa-map .leaflet-popup.tifa-district-popup-shell .leaflet-popup-content {
+        @apply m-0 w-[19rem] max-w-[calc(100vw-3rem)];
+    }
+
+    .tifa-map .leaflet-popup.tifa-district-popup-shell .leaflet-popup-tip {
+        @apply bg-white;
+    }
+
+    .tifa-district-popup {
+        @apply p-3 text-slate-900;
+    }
+
+    .tifa-district-popup__name {
+        @apply text-sm font-bold leading-5 text-slate-950;
+    }
+
+    .tifa-district-popup__total {
+        @apply mt-1 text-base font-black leading-5 text-sky-800;
+    }
+
+    .tifa-district-popup__meta {
+        @apply mt-1 text-[11px] font-medium text-slate-700;
+    }
+
+    .tifa-district-popup__meta span {
+        @apply px-1 text-slate-400;
+    }
+
+    .tifa-district-popup__list {
+        @apply mt-3 max-h-64 space-y-3 overflow-y-auto border-t border-slate-100 pt-3 pr-1;
+        scrollbar-width: thin;
+    }
+
+    .tifa-district-popup__group h3 {
+        @apply text-[11px] font-bold text-sky-800;
+    }
+
+    .tifa-district-popup__group h3 span {
+        @apply font-semibold text-slate-500;
+    }
+
+    .tifa-district-popup__school {
+        @apply mt-1.5 flex items-start justify-between gap-3 text-[11px] leading-4;
+    }
+
+    .tifa-district-popup__school span {
+        @apply min-w-0 font-medium text-slate-800;
+    }
+
+    .tifa-district-popup__school small {
+        @apply shrink-0 text-[10px] font-medium text-slate-500;
+    }
+
+    .tifa-district-popup__empty {
+        @apply mt-2 text-[11px] leading-4 text-slate-600;
     }
 
     /* Keep keyboard focus visible as a polygon stroke, not the browser's rectangular SVG outline. */

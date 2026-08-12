@@ -77,10 +77,9 @@ class TifaResponseFormatter
     {
         $metric = $this->metricLabel($intent['action']);
         $subject = $this->subject($metric, $intent['filters']);
-        $source = preg_replace('/^Rekap\s+/iu', 'Data ', (string) $data['dataset']['name']) ?: $data['dataset']['name'];
         $value = number_format((int) $data['value'], 0, ',', '.');
 
-        return "Berdasarkan {$source}, terdapat {$value} {$subject}.";
+        return "Berdasarkan Data Pendidikan Terintegrasi Teluk Bintuni, terdapat {$value} {$subject}.";
     }
 
     private function metricLabel(string $action): string

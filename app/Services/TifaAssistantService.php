@@ -6,6 +6,7 @@ class TifaAssistantService
 {
     public function __construct(
         private TifaIntentService $intentService,
+        private TifaLocalDataIntentService $localDataIntent,
         private TifaDataService $dataService,
         private TifaResponseFormatter $formatter,
         private TeacherAnalyticsIntentService $teacherIntent,
@@ -26,6 +27,9 @@ class TifaAssistantService
             return ['question' => $question, 'intent' => ['type' => 'official_terminology'], 'answer' => $definition, 'data' => null, 'visualization' => null, 'source' => null];
         }
         if ($this->privacyGuard->blocks($question)) return $this->privacyGuard->response($question);
+        if ($intent = $this->localDataIntent->parse($question)) {
+            return $this->schoolDataResponse($question, $intent);
+        }
         $teacher = $this->teacherIntent->parse($question, $context);
         if ($teacher !== null) {
             if (isset($teacher['blocked'])) throw new \App\Exceptions\TifaIntentException('TIFA saat ini hanya menyediakan statistik agregat guru, bukan data pribadi individual.');
@@ -38,6 +42,14 @@ class TifaAssistantService
             return ['question' => $question, 'intent' => ['type' => 'general_conversation'], 'answer' => $this->generalTeacher->answer($question), 'data' => null, 'visualization' => null, 'source' => null];
         }
         $intent = $this->intentService->parse($question);
+        return $this->schoolDataResponse($question, $intent);
+    }
+
+    /** @param array{action: string, filters: array{education_level: ?string, status: ?string, district: ?string}} $intent
+     * @return array<string, mixed>
+     */
+    private function schoolDataResponse(string $question, array $intent): array
+    {
         $data = $this->dataService->query($intent);
         $isKpi = $data['visualization'] === 'kpi';
 

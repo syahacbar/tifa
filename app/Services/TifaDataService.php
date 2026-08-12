@@ -107,14 +107,31 @@ class TifaDataService
 
         foreach ($levels as $level) {
             $districtQuery->selectRaw("SUM(CASE WHEN education_level = '{$level}' THEN 1 ELSE 0 END) as level_".strtolower($level));
+            $districtQuery->selectRaw("SUM(CASE WHEN education_level = '{$level}' AND LOWER(TRIM(status)) = 'negeri' THEN 1 ELSE 0 END) as public_level_".strtolower($level));
+            $districtQuery->selectRaw("SUM(CASE WHEN education_level = '{$level}' AND LOWER(TRIM(status)) = 'swasta' THEN 1 ELSE 0 END) as private_level_".strtolower($level));
         }
+
+        $schoolsByDistrict = (clone $schools)
+            ->whereNotNull('district')
+            ->whereRaw("TRIM(district) <> ''")
+            ->orderBy('education_level')
+            ->orderBy('name')
+            ->get(['id', 'district', 'name', 'education_level', 'status', 'npsn'])
+            ->groupBy('district')
+            ->map(fn ($records) => $records->map(fn ($school) => [
+                'id' => $school->id,
+                'name' => $school->name,
+                'education_level' => $school->education_level,
+                'status' => $school->status,
+                'npsn' => $school->npsn,
+            ])->values()->all());
 
         $districts = $districtQuery
             ->groupBy('district')
             ->orderByDesc('total_schools')
             ->orderBy('district')
             ->get()
-            ->map(function ($district) use ($levels): array {
+            ->map(function ($district) use ($levels, $schoolsByDistrict): array {
                 return [
                     // The stored value is intentionally retained as the future map/filter key.
                     'identifier' => $district->district,
@@ -125,6 +142,15 @@ class TifaDataService
                     'levels' => collect($levels)->mapWithKeys(
                         fn (string $level) => [$level => (int) $district->{'level_'.strtolower($level)}]
                     )->all(),
+                    'levels_by_status' => [
+                        'Negeri' => collect($levels)->mapWithKeys(
+                            fn (string $level) => [$level => (int) $district->{'public_level_'.strtolower($level)}]
+                        )->all(),
+                        'Swasta' => collect($levels)->mapWithKeys(
+                            fn (string $level) => [$level => (int) $district->{'private_level_'.strtolower($level)}]
+                        )->all(),
+                    ],
+                    'schools' => $schoolsByDistrict->get($district->district, []),
                 ];
             })
             ->all();
