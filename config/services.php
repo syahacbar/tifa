@@ -36,11 +36,17 @@ return [
     ],
 
     'tifa_ai' => [
-        'provider' => env('TIFA_AI_PROVIDER', 'ollama'),
+        'provider' => env('TIFA_LLM_PROVIDER', env('TIFA_AI_PROVIDER', 'ollama')),
         'ollama' => [
             'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
             'model' => env('OLLAMA_MODEL', 'qwen3:4b'),
             'timeout' => (int) env('OLLAMA_TIMEOUT', 60),
+        ],
+        'groq' => [
+            'api_key' => env('GROQ_API_KEY'),
+            'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+            'model' => env('GROQ_MODEL', ''),
+            'timeout' => (int) env('GROQ_TIMEOUT', 15),
         ],
     ],
 

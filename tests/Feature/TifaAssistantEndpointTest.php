@@ -84,7 +84,7 @@ class TifaAssistantEndpointTest extends TestCase
 
         $this->postJson('/api/tifa/ask', ['question' => 'Apa tugas seorang guru?'])
             ->assertStatus(503)
-            ->assertExactJson(['message' => 'Layanan Ollama tidak tersedia.']);
+            ->assertExactJson(['message' => 'Layanan AI tidak tersedia.']);
     }
 
     public function test_local_school_quick_question_succeeds_when_ollama_is_unavailable(): void

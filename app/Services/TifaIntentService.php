@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\TifaIntentException;
+use App\Contracts\LlmProvider;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -10,7 +11,7 @@ use JsonException;
 
 class TifaIntentService
 {
-    public function __construct(private OllamaClient $ollama) {}
+    public function __construct(private LlmProvider $llm) {}
 
     /**
      * Ubah pertanyaan bahasa alami menjadi intent query TIFAA yang aman.
@@ -19,25 +20,24 @@ class TifaIntentService
      */
     public function parse(string $question): array
     {
-        if (config('services.tifa_ai.provider') !== 'ollama') {
-            throw new TifaIntentException('Provider AI TIFAA yang dikonfigurasi tidak didukung.');
-        }
-
-        $rawIntent = $this->ollama->generate($this->prompt($question));
+        $rawIntent = $this->llm->chat([
+            ['role' => 'system', 'content' => 'Anda adalah engine pemahaman intent TIFAA. Jangan menjawab pengguna, membuat angka statistik, SQL, atau nama data yang tidak disebutkan. Kembalikan JSON saja sesuai instruksi pengguna.'],
+            ['role' => 'user', 'content' => $this->prompt($question)],
+        ], ['json' => true, 'temperature' => 0]);
 
         try {
             $intent = json_decode($rawIntent, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new TifaIntentException('Respons intent Ollama bukan JSON yang valid.', previous: $exception);
+            throw new TifaIntentException('Respons intent LLM bukan JSON yang valid.', previous: $exception);
         }
 
         if (! is_array($intent) || array_is_list($intent)) {
-            throw new TifaIntentException('Respons intent Ollama harus berupa object JSON.');
+            throw new TifaIntentException('Respons intent LLM harus berupa object JSON.');
         }
 
         $unsupportedKeys = array_diff(array_keys($intent), ['action', 'filters', 'options']);
         if ($unsupportedKeys !== []) {
-            throw new TifaIntentException('Respons intent Ollama memiliki field yang tidak didukung.');
+            throw new TifaIntentException('Respons intent LLM memiliki field yang tidak didukung.');
         }
 
         try {
@@ -88,6 +88,7 @@ Filter hanya education_level, status, district; gunakan kapital. "negeri"=NEGERI
 Selalu salin distrik bernama dari pertanyaan ke filter district; jangan menghilangkannya.
 "tampilkan/daftar/list" sekolah = school_list. "terbanyak/teratas" = school_ranking dengan options {"ranking_by":"students_total|teachers|classrooms|laboratories|libraries","limit":1-20}. Sebaran distrik=district_breakdown, jenjang=education_level_breakdown, negeri vs swasta=status_breakdown. Options hanya untuk school_ranking.
 Contoh tepat: "Sebaran SD berdasarkan distrik" = {"action":"district_breakdown","filters":{"education_level":"SD","status":null,"district":null}}. "Tampilkan sekolah swasta di Distrik Bintuni" = {"action":"school_list","filters":{"education_level":null,"status":"SWASTA","district":"BINTUNI"}}.
+Guru, tenaga pengajar, pengajar, pendidik, dan tenaga pendidik adalah domain teacher yang ditangani oleh analytics deterministik; jangan memetakan pertanyaan tersebut ke school_count atau action sekolah. Kata sekolah atau distrik dapat menjadi grouping/filter teacher, bukan otomatis domain sekolah. Domain terutama ditentukan oleh entitas/metrik yang dihitung.
 Jangan membuat SQL atau angka statistik.
 Pertanyaan: {$question}
 PROMPT;

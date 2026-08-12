@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\TeacherAssignment;
 use App\Models\TeacherImportBatch;
 use App\Models\School;
+use App\Models\Dataset;
 use App\Services\TifaAssistantService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -13,6 +14,12 @@ use Tests\TestCase;
 class TeacherConversationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['services.tifa_ai.provider' => 'ollama']);
+    }
 
     public function test_deterministic_teacher_question_uses_analytics_without_ollama(): void
     {
@@ -83,6 +90,48 @@ class TeacherConversationTest extends TestCase
         $level = $assistant->ask('Berapa guru SMP?');
         $this->assertNull($level['intent']['filters']['school_id']);
         $this->assertSame('SMP', $level['intent']['filters']['education_level']);
+    }
+
+    public function test_teacher_synonyms_take_precedence_over_school_and_district_terms(): void
+    {
+        Dataset::factory()->active()->create();
+        $batch = TeacherImportBatch::create(['source_filename' => 'synonyms.xlsx', 'source_checksum' => hash('sha256', 'synonyms'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
+        $kuri = School::factory()->create(['name' => 'SMP NEGERI 1 KURI', 'education_level' => 'SMP']);
+        foreach ([['Bintuni', null, 'one'], ['Bintuni', null, 'two'], ['Manimeri', null, 'three'], ['Kuri', $kuri->id, 'four']] as [$district, $schoolId, $fingerprint]) {
+            TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SMP', 'source_row' => random_int(300000, 399999), 'source_fingerprint' => hash('sha256', uniqid('', true)), 'deduplication_fingerprint' => $fingerprint, 'school_id' => $schoolId, 'school_resolution_status' => 'resolved', 'district' => $district]);
+        }
+        Http::fake();
+        $assistant = app(TifaAssistantService::class);
+
+        $districtTop = $assistant->ask('Distrik mana sih yang tenaga pengajarnya paling banyak?');
+        $this->assertSame('teacher_analytics', $districtTop['intent']['type']);
+        $this->assertSame('district', $districtTop['intent']['group_by']);
+        $this->assertSame(1, $districtTop['intent']['top_n']);
+        $this->assertSame('assignment_count', $districtTop['intent']['metric']);
+        $this->assertSame('Bintuni', $districtTop['data']['records'][0]['label']);
+
+        foreach (['Distrik mana yang gurunya paling banyak?', 'Daerah mana yang tenaga pendidiknya paling banyak?'] as $question) {
+            $result = $assistant->ask($question);
+            $this->assertSame('teacher_analytics', $result['intent']['type']);
+            $this->assertSame('district', $result['intent']['group_by']);
+            $this->assertSame(1, $result['intent']['top_n']);
+        }
+
+        foreach (['Sekolah mana yang tenaga pengajarnya paling banyak?', 'Sekolah mana yang gurunya paling banyak?'] as $question) {
+            $result = $assistant->ask($question);
+            $this->assertSame('teacher_analytics', $result['intent']['type']);
+            $this->assertSame('school', $result['intent']['group_by']);
+            $this->assertSame(1, $result['intent']['top_n']);
+        }
+
+        $schoolScoped = $assistant->ask('Berapa tenaga pengajar di SMP Negeri 1 Kuri?');
+        $this->assertSame('teacher_analytics', $schoolScoped['intent']['type']);
+        $this->assertSame('assignment_count', $schoolScoped['intent']['metric']);
+        $this->assertSame($kuri->id, $schoolScoped['intent']['filters']['school_id']);
+
+        $schools = $assistant->ask('Berapa jumlah sekolah di Distrik Bintuni?');
+        $this->assertSame('school_count', $schools['intent']['action']);
+        Http::assertNothingSent();
     }
 
     public function test_privacy_guard_returns_immediately_without_ollama_request(): void

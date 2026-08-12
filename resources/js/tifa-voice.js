@@ -45,8 +45,9 @@ export class TifaaVoiceOutput {
         this.synthesis.cancel();
         if (!this.selected) this.refreshVoices();
 
-        // Keep the official all-caps brand in the UI, but pronounce it as one word.
-        const utterance = new SpeechSynthesisUtterance(answer.replace(/\bTIFAA\b/g, 'Tifaa'));
+        // Keep the official all-caps brand in the UI, but use its spoken form
+        // so browser engines do not spell the final A separately.
+        const utterance = new SpeechSynthesisUtterance(answer.replace(/\bTIFAA\b/g, 'Tifa'));
         utterance.lang = this.config.lang;
         utterance.rate = this.config.rate;
         utterance.pitch = this.config.pitch;

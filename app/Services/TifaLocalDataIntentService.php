@@ -44,7 +44,7 @@ class TifaLocalDataIntentService
             preg_match('/\b(tenaga kependidikan|tendik)\b/u', $text) === 1 => 'education_staff_total',
             // "guru sekolah negeri" refers to the active school aggregate, not a teacher identity query.
             preg_match('/\b(guru)\b/u', $text) === 1 && preg_match('/\bsekolah\b/u', $text) === 1 => 'teacher_total',
-            preg_match('/\b(guru|ptk|kepala sekolah|penugasan)\b/u', $text) !== 1
+            preg_match('/\b(?:guru(?:nya)?|ptk|kepala sekolah|penugasan|tenaga\s+pengajar(?:nya)?|para\s+pengajar|pengajar(?:nya)?|pendidik(?:nya)?|tenaga\s+pendidik(?:nya)?)\b/u', $text) !== 1
                 && preg_match('/\b(sekolah|sd|smp|sma|smk|tk|kb|pkbm|skb)\b/u', $text) === 1 => 'school_count',
             default => null,
         };
