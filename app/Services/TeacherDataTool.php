@@ -17,22 +17,26 @@ class TeacherDataTool
     {
         try {
             $data = Validator::make($contract, [
-                'version' => ['required', Rule::in(['v1'])], 'operation' => ['required', Rule::in(['count', 'breakdown', 'ranking'])],
+                'version' => ['required', Rule::in(['v1'])], 'operation' => ['required', Rule::in(['count', 'breakdown', 'ranking', 'comparison'])],
                 'entity' => ['required', Rule::in(['teacher_assignment', 'teacher_identity'])], 'metric' => ['required', Rule::in(TeacherAnalyticsService::METRICS)],
                 'filters' => ['required', 'array:'.implode(',', self::FILTERS)], 'filters.*' => ['nullable'],
                 'group_by' => ['nullable', Rule::in(TeacherAnalyticsService::DIMENSIONS)], 'top_n' => ['nullable', 'integer', 'min:1', 'max:20'],
+                'sort' => ['nullable', 'array:field,direction'], 'sort.field' => ['required_with:sort', Rule::in(['value'])], 'sort.direction' => ['required_with:sort', Rule::in(['asc', 'desc'])],
+                'comparison_values' => ['nullable', 'array', 'min:2'], 'comparison_values.*' => ['string'],
             ])->validate();
         } catch (ValidationException $exception) {
             throw new TeacherDataToolException($this->validationCode($exception), 'Teacher tool request tidak valid.');
         }
         if (($data['entity'] === 'teacher_assignment') !== ($data['metric'] === 'assignment_count')) throw new TeacherDataToolException('invalid_metric', 'Metric tidak sesuai entity.');
-        if ($data['operation'] === 'count' && ($data['group_by'] !== null || $data['top_n'] !== null)) throw new TeacherDataToolException('invalid_combination', 'Count tidak menerima group_by atau top_n.');
-        if ($data['operation'] === 'breakdown' && ($data['group_by'] === null || $data['top_n'] !== null)) throw new TeacherDataToolException('invalid_combination', 'Breakdown memerlukan group_by tanpa top_n.');
-        if ($data['operation'] === 'ranking' && ($data['group_by'] === null || $data['top_n'] === null)) throw new TeacherDataToolException('invalid_combination', 'Ranking memerlukan group_by dan top_n.');
-        $analytics = app(TeacherAnalyticsService::class)->query(['metric' => $data['metric'], 'filters' => $data['filters'], 'group_by' => $data['group_by'], 'top_n' => $data['top_n']]);
+        if ($data['operation'] === 'count' && ($data['group_by'] !== null || $data['top_n'] !== null || isset($data['sort']) || isset($data['comparison_values']))) throw new TeacherDataToolException('invalid_combination', 'Count tidak menerima group_by, top_n, sort, atau comparison values.');
+        if ($data['operation'] === 'breakdown' && ($data['group_by'] === null || $data['top_n'] !== null || isset($data['sort']) || isset($data['comparison_values']))) throw new TeacherDataToolException('invalid_combination', 'Breakdown memerlukan group_by tanpa top_n, sort, atau comparison values.');
+        if ($data['operation'] === 'ranking' && ($data['group_by'] === null || $data['top_n'] === null || isset($data['comparison_values']))) throw new TeacherDataToolException('invalid_combination', 'Ranking memerlukan group_by dan top_n.');
+        if ($data['operation'] === 'comparison' && ($data['group_by'] === null || ! isset($data['comparison_values']) || isset($data['sort']) || $data['top_n'] !== null)) throw new TeacherDataToolException('invalid_combination', 'Comparison memerlukan group_by dan comparison values.');
+        $sort = $data['operation'] === 'ranking' ? ($data['sort'] ?? ['field' => 'value', 'direction' => 'desc']) : null;
+        $analytics = app(TeacherAnalyticsService::class)->query(['metric' => $data['metric'], 'filters' => $data['filters'], 'group_by' => $data['group_by'], 'top_n' => $data['top_n'], 'sort' => $sort, 'comparison_values' => $data['comparison_values'] ?? null]);
         $analytics['comparison'] = (bool) ($contract['comparison'] ?? false);
         $quality = $this->quality($analytics, $data['group_by']);
-        return ['version' => 'v1', 'status' => 'ok', 'operation' => $data['operation'], 'entity' => $data['entity'], 'metric' => $data['metric'], 'data' => isset($analytics['value']) ? ['value' => $analytics['value']] : $analytics['data'], 'context' => ['filters' => $analytics['filters'], 'group_by' => $analytics['group_by'], 'top_n' => $data['top_n']], 'provenance' => ['source' => 'teacher_authoritative_dataset', 'batch_id' => $analytics['batch']['id'], 'reference_period' => $analytics['batch']['source_period'], 'authoritative' => true], 'quality' => $quality, 'presentation' => $analytics];
+        return ['version' => 'v1', 'status' => 'ok', 'operation' => $data['operation'], 'entity' => $data['entity'], 'metric' => $data['metric'], 'data' => isset($analytics['value']) ? ['value' => $analytics['value']] : $analytics['data'], 'context' => ['filters' => $analytics['filters'], 'group_by' => $analytics['group_by'], 'top_n' => $data['top_n'], 'sort' => $analytics['sort'], 'comparison_values' => $analytics['comparison_values']], 'provenance' => ['source' => 'teacher_authoritative_dataset', 'batch_id' => $analytics['batch']['id'], 'reference_period' => $analytics['batch']['source_period'], 'authoritative' => true], 'quality' => $quality, 'presentation' => $analytics];
     }
 
     /** @param array<string, mixed> $analytics

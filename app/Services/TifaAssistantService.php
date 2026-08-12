@@ -17,6 +17,7 @@ class TifaAssistantService
         private GeneralTeacherConversationService $generalTeacher,
         private OfficialTerminologyService $terminology,
         private TifaGreetingService $greeting,
+        private TifaPresentationService $presentation,
     ) {}
 
     /**
@@ -29,22 +30,31 @@ class TifaAssistantService
             return ['question' => $question, 'intent' => ['type' => 'official_terminology'], 'answer' => $definition, 'data' => null, 'visualization' => null, 'source' => null];
         }
         if ($this->privacyGuard->blocks($question)) return $this->privacyGuard->response($question);
+        if ($this->teacherIntent->shouldPrioritize($question, $context) && ($teacher = $this->teacherIntent->parseSemantic($question, $context)) !== null) {
+            return $this->teacherDataResponse($question, $teacher);
+        }
         if ($intent = $this->localDataIntent->parse($question)) {
             return $this->schoolDataResponse($question, $intent);
         }
-        $teacher = $this->teacherIntent->parse($question, $context);
+        $teacher = $this->teacherIntent->parseSemantic($question, $context);
         if ($teacher !== null) {
-            if (isset($teacher['blocked'])) throw new \App\Exceptions\TifaIntentException('TIFAA saat ini hanya menyediakan statistik agregat guru, bukan data pribadi individual.');
-            $tool = $this->teacherTool->execute($teacher);
-            $data = $tool['presentation'];
-            $data['quality'] = $tool['quality'];
-            return ['question' => $question, 'intent' => ['type' => 'teacher_analytics', ...$teacher], 'answer' => $this->formatter->formatTeacher($data), 'data' => $tool['data'], 'visualization' => $data['visualization'], 'source' => ['reference_period' => $tool['provenance']['reference_period'], 'authoritative' => true], 'teacher_context' => $this->teacherContext->fromIntent($teacher)];
+            return $this->teacherDataResponse($question, $teacher);
         }
         if ($this->generalTeacher->handles($question)) {
             return ['question' => $question, 'intent' => ['type' => 'general_conversation'], 'answer' => $this->generalTeacher->answer($question), 'data' => null, 'visualization' => null, 'source' => null];
         }
         $intent = $this->intentService->parse($question);
         return $this->schoolDataResponse($question, $intent);
+    }
+
+    private function teacherDataResponse(string $question, \App\Queries\SemanticQuery $teacher): array
+    {
+        $teacherContract = app(TeacherSemanticQueryAdapter::class)->toToolContract($teacher);
+        $tool = $this->teacherTool->execute($teacherContract);
+        $data = $tool['presentation'];
+        $data['quality'] = $tool['quality'];
+
+        return ['question' => $question, 'intent' => ['type' => 'teacher_analytics', ...$teacherContract], 'answer' => $this->formatter->formatTeacher($data), 'data' => $tool['data'], 'presentation' => $this->presentation->forTeacher($data), 'visualization' => $data['visualization'], 'source' => ['reference_period' => $tool['provenance']['reference_period'], 'authoritative' => true], 'teacher_context' => $this->teacherContext->fromIntent($teacherContract)];
     }
 
     /** @param array{action: string, filters: array{education_level: ?string, status: ?string, district: ?string}} $intent
@@ -60,6 +70,7 @@ class TifaAssistantService
             'intent' => $intent,
             'answer' => $isKpi ? $this->formatter->format($intent, $data) : $this->formatter->formatAnalytic($intent, $data),
             'data' => $isKpi ? ['value' => $data['value']] : $data['data'],
+            'presentation' => $this->presentation->forSchool($intent, $data),
             'visualization' => $data['visualization'],
             'source' => [
                 'dataset' => $data['dataset']['name'],

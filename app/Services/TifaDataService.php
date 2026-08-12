@@ -198,7 +198,7 @@ class TifaDataService
         ], $validated['filters'] ?? []);
         $options = $validated['options'] ?? [];
 
-        if ($validated['action'] !== 'school_ranking' && $options !== []) {
+        if (! in_array($validated['action'], ['school_ranking', 'district_breakdown'], true) && $options !== []) {
             Validator::make(['options' => $options], [
                 'options' => ['prohibited'],
             ])->validate();
@@ -209,7 +209,7 @@ class TifaDataService
         return match ($validated['action']) {
             'school_list' => $this->schoolList($dataset, $filters, $schools),
             'school_ranking' => $this->schoolRanking($dataset, $filters, $schools, $options),
-            'district_breakdown' => $this->breakdown($dataset, $filters, $schools, 'district', 'district', 'bar_chart'),
+            'district_breakdown' => $this->breakdown($dataset, $filters, $schools, 'district', 'district', 'bar_chart', $options['limit'] ?? null),
             'education_level_breakdown' => $this->breakdown($dataset, $filters, $schools, 'education_level', 'education_level', 'bar_chart'),
             'status_breakdown' => $this->breakdown($dataset, $filters, $schools, 'status', 'status', 'comparison'),
             default => $this->aggregate($dataset, $validated['action'], $filters, $schools),
@@ -287,14 +287,15 @@ class TifaDataService
     }
 
     /** @param array<string, ?string> $filters */
-    private function breakdown(Dataset $dataset, array $filters, Builder $schools, string $column, string $label, string $visualization): array
+    private function breakdown(Dataset $dataset, array $filters, Builder $schools, string $column, string $label, string $visualization, ?int $limit = null): array
     {
-        $records = $schools->select($column)->selectRaw('COUNT(*) AS value')->groupBy($column)->orderBy($column)
+        $rows = $schools->select($column)->selectRaw('COUNT(*) AS value')->groupBy($column);
+        $records = ($limit === null ? $rows->orderBy($column) : $rows->orderByDesc('value')->orderBy($column)->limit($limit))
             ->get()->map(fn ($row) => ['label' => $row->{$column}, 'value' => (int) $row->value])->all();
 
         return [
             ...$this->baseResult($dataset, "{$column}_breakdown", $filters),
-            'data' => ['dimension' => $label, 'records' => $records],
+            'data' => ['dimension' => $label, 'records' => $records, 'limit' => $limit],
             'visualization' => $visualization,
         ];
     }

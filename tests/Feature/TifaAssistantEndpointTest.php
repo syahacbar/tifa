@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Dataset;
 use App\Models\School;
+use App\Models\TeacherAssignment;
+use App\Models\TeacherImportBatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -53,6 +55,12 @@ class TifaAssistantEndpointTest extends TestCase
             ],
             'answer' => 'Jumlah SD di Kabupaten Teluk Bintuni sebanyak 88 sekolah, terdiri dari 44 sekolah negeri dan 44 sekolah swasta.',
             'data' => ['value' => 88],
+            'presentation' => [
+                'type' => 'kpi',
+                'title' => 'Jumlah Sekolah',
+                'value' => 88,
+                'unit' => 'sekolah',
+            ],
             'visualization' => 'kpi',
             'source' => [
                 'dataset' => 'Rekap Dapodik Juni 2026',
@@ -122,26 +130,42 @@ class TifaAssistantEndpointTest extends TestCase
         $dataset = Dataset::factory()->active()->create();
         School::factory()->for($dataset)->create(['education_level' => 'SD', 'status' => 'Negeri', 'district' => 'Bintuni', 'students_total' => 10, 'teachers' => 2, 'classrooms' => 3]);
         School::factory()->for($dataset)->create(['education_level' => 'SD', 'status' => 'Swasta', 'district' => 'Bintuni', 'students_total' => 20, 'teachers' => 4, 'classrooms' => 5]);
-        School::factory()->for($dataset)->create(['education_level' => 'SMP', 'status' => 'Negeri', 'district' => 'Manimeri', 'teachers' => 6, 'laboratories' => 3]);
-        School::factory()->for($dataset)->create(['education_level' => 'SMA', 'status' => 'Swasta', 'district' => 'Sumuri', 'libraries' => 4]);
+        School::factory()->for($dataset)->create(['education_level' => 'SMP', 'status' => 'Negeri', 'district' => 'Manimeri', 'students_total' => 0, 'teachers' => 6, 'laboratories' => 3]);
+        School::factory()->for($dataset)->create(['education_level' => 'SMA', 'status' => 'Swasta', 'district' => 'Sumuri', 'students_total' => 0, 'libraries' => 4]);
+        $batch = TeacherImportBatch::create(['source_filename' => 'quick-questions.xlsx', 'source_checksum' => hash('sha256', 'quick-questions'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
+        foreach ([['Bintuni', 'PNS'], ['Bintuni', 'PPPK'], ['Manimeri', 'PNS'], ['Babo', 'PPPK'], ['Tomu', 'PNS'], ['Sumuri', 'PPPK']] as $index => [$district, $status]) {
+            TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SD', 'source_row' => $index + 1, 'source_fingerprint' => hash('sha256', 'quick-'.$index), 'deduplication_fingerprint' => hash('sha256', 'teacher-'.$index), 'school_resolution_status' => 'resolved', 'district' => $district, 'employment_status' => $status]);
+        }
         Http::fake(['*' => Http::response(['error' => 'server unavailable'], 503)]);
 
         foreach ([
             ['Berapa jumlah sekolah di Kabupaten Teluk Bintuni?', 'school_count', 4],
+            ['Berapa jumlah sekolah di Distrik Bintuni?', 'school_count', 2],
             ['Berapa jumlah SD di Kabupaten Teluk Bintuni?', 'school_count', 2],
             ['Berapa jumlah sekolah negeri?', 'school_count', 2],
-            ['Berapa jumlah sekolah swasta?', 'school_count', 2],
-            ['Berapa jumlah sekolah di Distrik Bintuni?', 'school_count', 2],
+            ['Berapa jumlah siswa di Kabupaten Teluk Bintuni?', 'student_total', 30],
             ['Berapa total siswa SD?', 'student_total', 30],
-            ['Berapa jumlah guru sekolah negeri?', 'teacher_total', 8],
             ['Berapa laboratorium SMP?', 'laboratory_total', 3],
-            ['Berapa jumlah ruang kelas SD?', 'classroom_total', 8],
-            ['Berapa jumlah perpustakaan SMA?', 'library_total', 4],
         ] as [$question, $action, $value]) {
-            $this->postJson('/api/tifa/ask', ['question' => $question])
+            $response = $this->postJson('/api/tifa/ask', ['question' => $question])
                 ->assertOk()
                 ->assertJsonPath('intent.action', $action)
                 ->assertJsonPath('data.value', $value);
+            $this->assertStringNotContainsString('Berdasarkan data pendidikan terintegrasi', $response->json('answer'));
+        }
+
+        foreach ([
+            ['Berapa jumlah guru di Kabupaten Teluk Bintuni?', 'count', 6],
+            ['Sebutkan 5 distrik dengan jumlah guru terbanyak.', 'ranking', null],
+            ['Berapa jumlah guru PPPK di Kabupaten Teluk Bintuni?', 'count', 3],
+        ] as [$question, $operation, $value]) {
+            $response = $this->postJson('/api/tifa/ask', ['question' => $question])
+                ->assertOk()
+                ->assertJsonPath('intent.type', 'teacher_analytics')
+                ->assertJsonPath('intent.operation', $operation);
+            if ($value !== null) $response->assertJsonPath('data.value', $value);
+            if ($operation === 'ranking') $this->assertCount(5, $response->json('data.records'));
+            $this->assertStringNotContainsString('Berdasarkan data pendidikan terintegrasi', $response->json('answer'));
         }
 
         Http::assertNothingSent();

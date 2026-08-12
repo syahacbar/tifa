@@ -22,6 +22,8 @@ class TeacherAnalyticsService
             'filters.education_level' => ['nullable', 'string'], 'filters.district' => ['nullable', 'string'], 'filters.school_id' => ['nullable', 'integer'],
             'filters.employment_status' => ['nullable', 'string'], 'filters.ptk_type' => ['nullable', 'string'], 'filters.ptk_position' => ['nullable', 'string'], 'filters.education' => ['nullable', 'string'],
             'group_by' => ['nullable', 'string', Rule::in(self::DIMENSIONS)], 'top_n' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'sort' => ['nullable', 'array:field,direction'], 'sort.field' => ['required_with:sort', Rule::in(['value'])], 'sort.direction' => ['required_with:sort', Rule::in(['asc', 'desc'])],
+            'comparison_values' => ['nullable', 'array', 'min:2'], 'comparison_values.*' => ['string'],
         ])->validate();
         $batch = TeacherImportBatch::query()->where('is_authoritative', true)->latest('id')->first();
         if (! $batch) throw new RuntimeException('Batch guru authoritative tidak ditemukan.');
@@ -29,9 +31,13 @@ class TeacherAnalyticsService
         $query = $this->filtered($batch, $filters);
         $metric = $data['metric'];
         $group = $data['group_by'] ?? null;
-        $result = ['metric' => $metric, 'filters' => $filters, 'group_by' => $group, 'batch' => ['id' => $batch->id, 'source_period' => $batch->reference_period, 'authoritative' => true], 'generated_at' => now()->toIso8601String(), 'data_quality_notes' => ['school relations distinguish resolved master school, accepted unresolved source, and incomplete source; null dimension values are labelled Tidak tersedia.']];
+        $sort = $data['sort'] ?? null;
+        $comparisonValues = $data['comparison_values'] ?? null;
+        $result = ['metric' => $metric, 'filters' => $filters, 'group_by' => $group, 'sort' => $sort, 'comparison_values' => $comparisonValues, 'batch' => ['id' => $batch->id, 'source_period' => $batch->reference_period, 'authoritative' => true], 'generated_at' => now()->toIso8601String(), 'data_quality_notes' => ['school relations distinguish resolved master school, accepted unresolved source, and incomplete source; null dimension values are labelled Tidak tersedia.']];
         if (! $group) return $result + ['value' => $this->metric($query, $metric), 'visualization' => 'kpi'];
-        $rows = $this->breakdown($query, $metric, $group, $data['top_n'] ?? null);
+        $rows = $comparisonValues !== null
+            ? $this->comparison($query, $metric, $group, $comparisonValues)
+            : $this->breakdown($query, $metric, $group, $data['top_n'] ?? null, $sort['direction'] ?? 'desc');
         return $result + ['data' => ['records' => $rows], 'visualization' => ($data['top_n'] ?? null) ? 'bar_chart' : 'table'];
     }
 
@@ -51,7 +57,7 @@ class TeacherAnalyticsService
     }
 
     /** @return array<int, array<string, int|string>> */
-    private function breakdown(Builder $query, string $metric, string $dimension, ?int $top): array
+    private function breakdown(Builder $query, string $metric, string $dimension, ?int $top, string $direction = 'desc'): array
     {
         if ($dimension === 'school') {
             $query->leftJoin('schools', 'teacher_assignments.school_id', '=', 'schools.id');
@@ -60,9 +66,23 @@ class TeacherAnalyticsService
             $label = "CASE source_sheet WHEN 'KB,TK,PAUD' THEN 'PAUD' WHEN 'SMA.' THEN 'SMA' ELSE source_sheet END";
         } else $label = "COALESCE(NULLIF({$dimension}, ''), 'Tidak tersedia')";
         $aggregate = $metric === 'assignment_count' ? 'COUNT(*)' : 'COUNT(DISTINCT deduplication_fingerprint)';
-        $rows = $query->selectRaw("{$label} as label, {$aggregate} as value")->groupByRaw($label)->orderByDesc('value')->orderBy('label');
+        $rows = $query->selectRaw("{$label} as label, {$aggregate} as value")->groupByRaw($label)->orderBy('value', $direction)->orderBy('label');
         if ($top) $rows->limit($top);
         return $rows->get()->map(fn ($row) => ['label' => $row->label, 'value' => (int) $row->value])->all();
+    }
+
+    /** @param array<int, string> $values
+     * @return array<int, array{label:string,value:int}>
+     */
+    private function comparison(Builder $query, string $metric, string $dimension, array $values): array
+    {
+        return collect($values)->map(function (string $value) use ($query, $metric, $dimension): array {
+            $scoped = clone $query;
+            if ($dimension === 'school') $scoped->whereHas('school', fn ($schools) => $schools->where('name', $value));
+            else $scoped->whereRaw("LOWER(TRIM({$dimension})) = ?", [mb_strtolower(trim($value))]);
+
+            return ['label' => $value, 'value' => $this->metric($scoped, $metric)];
+        })->all();
     }
 
     /** @return array<int, string> */

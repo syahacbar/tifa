@@ -28,14 +28,16 @@ class TifaResponseFormatter
 
         if (($data['visualization'] ?? '') === 'bar_chart') {
             $count = count($records);
+            $direction = $data['sort']['direction'] ?? 'desc';
+            $extreme = $direction === 'asc' ? 'paling sedikit' : 'terbanyak';
             if ($count === 1) {
                 $top = $records[0];
 
-                return "{$this->title($dimension)} dengan jumlah {$metric} terbanyak adalah {$top['label']} ({$this->number($top['value'])} {$metric}).";
+                return "{$this->title($dimension)} dengan jumlah {$metric} {$extreme} adalah {$top['label']} ({$this->number($top['value'])} {$metric}).";
             }
 
             return $this->withTeacherQuality(
-                "{$count} {$dimension} dengan jumlah {$metric} terbanyak adalah {$this->rows($records, $metric)}.",
+                "{$count} {$dimension} dengan jumlah {$metric} {$extreme} adalah {$this->rows($records, $metric)}.",
                 $data,
             );
         }
@@ -104,21 +106,25 @@ class TifaResponseFormatter
         }
 
         return match ($intent['action']) {
-            'school_list' => $this->schoolListAnswer($records, $data['data']['total'] ?? $total),
+            'school_list' => $this->schoolListAnswer($records, $data['data']['total'] ?? $total, $intent['filters']),
             'school_ranking' => $this->schoolRankingAnswer($records, (string) ($data['data']['ranking_by'] ?? 'students_total')),
-            'district_breakdown' => 'Jumlah sekolah berdasarkan distrik: '.$this->schoolRows($records).'.',
+            'district_breakdown' => ($data['data']['limit'] ?? null) !== null
+                ? count($records).' distrik dengan jumlah sekolah terbanyak adalah '.$this->schoolRows($records).'.'
+                : 'Jumlah sekolah berdasarkan distrik: '.$this->schoolRows($records).'.',
             'education_level_breakdown' => 'Jumlah sekolah berdasarkan jenjang: '.$this->schoolRows($records).'.',
             'status_breakdown' => 'Perbandingan jumlah sekolah negeri dan swasta: '.$this->schoolRows($records, ' dan ').'.',
         };
     }
 
     /** @param array<int, array<string, mixed>> $records */
-    private function schoolListAnswer(array $records, int $total): string
+    private function schoolListAnswer(array $records, int $total, array $filters): string
     {
-        $names = array_map(fn (array $record) => (string) $record['name'], array_slice($records, 0, 5));
-        $suffix = $total > count($names) ? ' dan '.($total - count($names)).' sekolah lainnya' : '';
+        $scope = '';
+        if ($filters['education_level'] !== null) $scope .= ' jenjang '.$filters['education_level'];
+        if ($filters['status'] !== null) $scope .= ' '.mb_strtolower($filters['status']);
+        if ($filters['district'] !== null) $scope .= ' di Distrik '.$this->title($filters['district']);
 
-        return "Ditemukan {$total} sekolah: ".implode(', ', $names).$suffix.'.';
+        return "Terdapat {$total} sekolah{$scope}. Berikut daftarnya:";
     }
 
     /** @param array<int, array<string, mixed>> $records */

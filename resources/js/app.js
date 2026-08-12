@@ -19,15 +19,15 @@ window.tifaAssistant = () => ({
     quickQuestionPageSize: 5,
     quickQuestions: [
         'Berapa jumlah sekolah di Kabupaten Teluk Bintuni?',
+        'Berapa jumlah sekolah di Distrik Bintuni?',
         'Berapa jumlah SD di Kabupaten Teluk Bintuni?',
         'Berapa jumlah sekolah negeri?',
-        'Berapa jumlah sekolah swasta?',
-        'Berapa jumlah sekolah di Distrik Bintuni?',
+        'Berapa jumlah guru di Kabupaten Teluk Bintuni?',
+        'Sebutkan 5 distrik dengan jumlah guru terbanyak.',
+        'Berapa jumlah guru PPPK di Kabupaten Teluk Bintuni?',
+        'Berapa jumlah siswa di Kabupaten Teluk Bintuni?',
         'Berapa total siswa SD?',
-        'Berapa jumlah guru sekolah negeri?',
         'Berapa laboratorium SMP?',
-        'Berapa jumlah ruang kelas SD?',
-        'Berapa jumlah perpustakaan SMA?',
     ],
 
     init() {
@@ -84,17 +84,18 @@ window.tifaAssistant = () => ({
         this.error = '';
         this.question = '';
         this.teacherContext = null;
+        this.quickQuestionPage = 0;
         this.$nextTick(() => this.$refs.question.focus());
     },
 
     visibleQuickQuestions() {
-        const start = this.quickQuestionPage * this.quickQuestionPageSize;
+        const start = this.quickQuestionPage * this.quickQuestionLimit();
 
-        return this.quickQuestions.slice(start, start + this.quickQuestionPageSize);
+        return this.quickQuestions.slice(start, start + this.quickQuestionLimit());
     },
 
     quickQuestionPageCount() {
-        return Math.ceil(this.quickQuestions.length / this.quickQuestionPageSize);
+        return Math.ceil(this.quickQuestions.length / this.quickQuestionLimit());
     },
 
     changeQuickQuestionPage(direction) {
@@ -102,7 +103,29 @@ window.tifaAssistant = () => ({
     },
 
     formattedValue() {
-        return new Intl.NumberFormat('id-ID').format(this.response?.data?.value ?? 0);
+        return new Intl.NumberFormat('id-ID').format(this.response?.presentation?.value ?? this.response?.data?.value ?? 0);
+    },
+
+    presentationRows() {
+        return this.response?.presentation?.data ?? this.response?.presentation?.rows ?? [];
+    },
+
+    presentationBarWidth(value) {
+        const maximum = Math.max(...this.presentationRows().map((item) => Number(item.value) || 0), 1);
+
+        return `${Math.max(3, (Number(value) / maximum) * 100)}%`;
+    },
+
+    presentationCell(row, key) {
+        return row?.[key] ?? '—';
+    },
+
+    isResponseState() {
+        return this.isLoading || this.response !== null || this.error !== '';
+    },
+
+    quickQuestionLimit() {
+        return this.isResponseState() ? 3 : this.quickQuestionPageSize;
     },
 });
 

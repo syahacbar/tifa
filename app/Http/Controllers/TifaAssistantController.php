@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\DatasetUnavailableException;
 use App\Exceptions\OllamaException;
 use App\Exceptions\LlmProviderException;
+use App\Exceptions\SemanticQueryValidationException;
 use App\Exceptions\TifaIntentException;
 use App\Services\TifaAssistantService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,8 @@ class TifaAssistantController extends Controller
             return response()->json($assistant->ask($validated['question'], $validated['teacher_context'] ?? null));
         } catch (OllamaException|LlmProviderException) {
             return response()->json(['message' => 'Layanan AI tidak tersedia.'], 503);
+        } catch (SemanticQueryValidationException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
         } catch (TifaIntentException) {
             return response()->json(['message' => 'Pertanyaan tidak dapat dipahami sebagai query data TIFAA.'], 422);
         } catch (DatasetUnavailableException) {

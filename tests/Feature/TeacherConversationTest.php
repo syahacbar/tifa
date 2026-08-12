@@ -107,7 +107,7 @@ class TeacherConversationTest extends TestCase
         $this->assertSame('teacher_analytics', $districtTop['intent']['type']);
         $this->assertSame('district', $districtTop['intent']['group_by']);
         $this->assertSame(1, $districtTop['intent']['top_n']);
-        $this->assertSame('assignment_count', $districtTop['intent']['metric']);
+        $this->assertSame('unique_teacher_count', $districtTop['intent']['metric']);
         $this->assertSame('Bintuni', $districtTop['data']['records'][0]['label']);
 
         foreach (['Distrik mana yang gurunya paling banyak?', 'Daerah mana yang tenaga pendidiknya paling banyak?'] as $question) {
@@ -126,11 +126,63 @@ class TeacherConversationTest extends TestCase
 
         $schoolScoped = $assistant->ask('Berapa tenaga pengajar di SMP Negeri 1 Kuri?');
         $this->assertSame('teacher_analytics', $schoolScoped['intent']['type']);
-        $this->assertSame('assignment_count', $schoolScoped['intent']['metric']);
+        $this->assertSame('unique_teacher_count', $schoolScoped['intent']['metric']);
         $this->assertSame($kuri->id, $schoolScoped['intent']['filters']['school_id']);
 
         $schools = $assistant->ask('Berapa jumlah sekolah di Distrik Bintuni?');
         $this->assertSame('school_count', $schools['intent']['action']);
+        Http::assertNothingSent();
+    }
+
+    public function test_school_teacher_rankings_bypass_local_school_aggregate_and_honor_requested_limit(): void
+    {
+        $batch = TeacherImportBatch::create(['source_filename' => 'sma-rankings.xlsx', 'source_checksum' => hash('sha256', 'sma-rankings'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
+        $schools = collect([
+            ['SMAN ALFA', 6], ['SMAN BETA', 5], ['SMAN CHARLIE', 4], ['SMAN DELTA', 3], ['SMAN ECHO', 2], ['SMAN FOXTROT', 1],
+        ])->map(fn (array $row) => [School::factory()->create(['name' => $row[0], 'education_level' => 'SMA']), $row[1]]);
+        foreach ($schools as [$school, $total]) {
+            for ($index = 1; $index <= $total; $index++) {
+                TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SMA.', 'source_row' => random_int(400000, 499999), 'source_fingerprint' => hash('sha256', uniqid('', true)), 'deduplication_fingerprint' => hash('sha256', $school->id.'-'.$index), 'school_id' => $school->id, 'school_resolution_status' => 'resolved']);
+            }
+        }
+        Http::fake();
+        $assistant = app(TifaAssistantService::class);
+
+        $main = $assistant->ask('Tampilkan 5 sekolah setingkat SMA dengan jumlah guru terbanyak');
+        $this->assertSame('teacher_analytics', $main['intent']['type']);
+        $this->assertSame('ranking', $main['intent']['operation']);
+        $this->assertSame('unique_teacher_count', $main['intent']['metric']);
+        $this->assertSame('SMA', $main['intent']['filters']['education_level']);
+        $this->assertSame('school', $main['intent']['group_by']);
+        $this->assertSame(5, $main['intent']['top_n']);
+        $this->assertCount(5, $main['data']['records']);
+        $this->assertSame('SMAN ALFA', $main['data']['records'][0]['label']);
+        $this->assertStringNotContainsString('sebanyak 294 orang', $main['answer']);
+
+        foreach ([
+            '5 SMA dengan guru terbanyak' => 5,
+            'Sebutkan 5 SMA yang memiliki guru paling banyak' => 5,
+            'Sekolah SMA mana yang jumlah gurunya paling banyak?' => 1,
+            'Top 5 SMA berdasarkan jumlah guru' => 5,
+            'Tampilkan lima sekolah SMA dengan tenaga pengajar terbanyak' => 5,
+            'SMA dengan guru terbanyak' => 1,
+            '10 sekolah jenjang SMA dengan jumlah guru terbanyak' => 10,
+            'sekolah setingkat SMA yang gurunya paling banyak' => 1,
+        ] as $question => $limit) {
+            $result = $assistant->ask($question);
+            $this->assertSame('teacher_analytics', $result['intent']['type'], $question);
+            $this->assertSame('unique_teacher_count', $result['intent']['metric'], $question);
+            $this->assertSame('SMA', $result['intent']['filters']['education_level'], $question);
+            $this->assertSame('school', $result['intent']['group_by'], $question);
+            $this->assertSame($limit, $result['intent']['top_n'], $question);
+        }
+
+        foreach (['Tampilkan 5 distrik dengan jumlah guru terbanyak', '5 distrik dengan tenaga pengajar terbanyak', 'Distrik mana yang gurunya paling banyak?'] as $question) {
+            $result = $assistant->ask($question);
+            $this->assertSame('teacher_analytics', $result['intent']['type'], $question);
+            $this->assertSame('district', $result['intent']['group_by'], $question);
+        }
+
         Http::assertNothingSent();
     }
 
