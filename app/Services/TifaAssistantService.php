@@ -16,6 +16,7 @@ class TifaAssistantService
         private TifaPrivacyGuard $privacyGuard,
         private GeneralTeacherConversationService $generalTeacher,
         private OfficialTerminologyService $terminology,
+        private TifaGreetingService $greeting,
     ) {}
 
     /**
@@ -23,6 +24,7 @@ class TifaAssistantService
      */
     public function ask(string $question, ?array $context = null): array
     {
+        if ($this->greeting->respondsTo($question)) return $this->greeting->response($question);
         if ($definition = $this->terminology->directDefinition($question)) {
             return ['question' => $question, 'intent' => ['type' => 'official_terminology'], 'answer' => $definition, 'data' => null, 'visualization' => null, 'source' => null];
         }
@@ -32,7 +34,7 @@ class TifaAssistantService
         }
         $teacher = $this->teacherIntent->parse($question, $context);
         if ($teacher !== null) {
-            if (isset($teacher['blocked'])) throw new \App\Exceptions\TifaIntentException('TIFA saat ini hanya menyediakan statistik agregat guru, bukan data pribadi individual.');
+            if (isset($teacher['blocked'])) throw new \App\Exceptions\TifaIntentException('TIFAA saat ini hanya menyediakan statistik agregat guru, bukan data pribadi individual.');
             $tool = $this->teacherTool->execute($teacher);
             $data = $tool['presentation'];
             $data['quality'] = $tool['quality'];

@@ -13,7 +13,7 @@ class TifaPrivacyGuard
     {
         return [
             'question' => $question, 'intent' => ['type' => 'privacy_guard'],
-            'answer' => 'Maaf, TIFA tidak menampilkan data pribadi seperti NIK, NIP, NUPTK, nomor telepon, alamat, atau tanggal lahir melalui layanan percakapan. Saya dapat membantu dengan statistik atau informasi agregat data guru.',
+            'answer' => 'Maaf, TIFAA tidak menampilkan data pribadi seperti NIK, NIP, NUPTK, nomor telepon, alamat, atau tanggal lahir melalui layanan percakapan. Saya dapat membantu dengan statistik atau informasi agregat data guru.',
             'data' => null, 'visualization' => null, 'source' => null,
         ];
     }

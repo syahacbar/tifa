@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="TIFA, Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni.">
+        <meta name="description" content="TIFAA — Tata Kelola dan Informasi Pendidikan Terintegrasi Dinas Pendidikan Kabupaten Teluk Bintuni.">
 
         <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
 
@@ -16,8 +16,8 @@
                     <a href="{{ route('home') }}" class="flex items-center gap-3">
                         <span class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 font-bold text-white shadow-lg shadow-sky-200">T</span>
                         <span>
-                            <span class="block font-semibold leading-tight text-slate-950">TIFA</span>
-                            <span class="block text-xs text-slate-500">Dinas Pendidikan Teluk Bintuni</span>
+                            <span class="block font-semibold leading-tight text-slate-950">TIFAA</span>
+                            <span class="block text-xs text-slate-500">Tata Kelola dan Informasi Pendidikan Terintegrasi</span>
                         </span>
                     </a>
 

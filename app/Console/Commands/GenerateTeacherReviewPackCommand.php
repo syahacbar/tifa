@@ -19,7 +19,7 @@ class GenerateTeacherReviewPackCommand extends Command
         $batch = $this->option('batch') ? TeacherImportBatch::find($this->option('batch')) : TeacherImportBatch::query()->latest('id')->first();
         if (! $batch) { $this->error('Batch impor guru tidak ditemukan.'); return self::FAILURE; }
         $lines = [
-            '# TIFA — Teacher Data Review Pack', '', "Batch #{$batch->id} · {$batch->reference_period}", '',
+            '# TIFAA — Teacher Data Review Pack', '', "Batch #{$batch->id} · {$batch->reference_period}", '',
             '> Read-only review pack. Tidak ada data guru, schools, workbook, atau status batch yang diubah.', '',
             '## A. Missing-NPSN school review', '',
         ];

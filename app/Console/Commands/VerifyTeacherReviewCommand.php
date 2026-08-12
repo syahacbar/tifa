@@ -20,7 +20,7 @@ class VerifyTeacherReviewCommand extends Command
     {
         $batch = $this->option('batch') ? TeacherImportBatch::find($this->option('batch')) : TeacherImportBatch::query()->latest('id')->first();
         if (! $batch) { $this->error('Batch impor guru tidak ditemukan.'); return self::FAILURE; }
-        $lines = ['# TIFA — Teacher Identifier & Master School Verification', '', "Batch #{$batch->id} · {$batch->reference_period}", '', '> Read-only. Identifier plaintext tidak dicetak dan tidak ada resolution yang diterapkan.', '', '## 1. Duplicate identifier verification', ''];
+        $lines = ['# TIFAA — Teacher Identifier & Master School Verification', '', "Batch #{$batch->id} · {$batch->reference_period}", '', '> Read-only. Identifier plaintext tidak dicetak dan tidak ada resolution yang diterapkan.', '', '## 1. Duplicate identifier verification', ''];
         foreach ($identifiers->verify($batch, $duplicates) as $index => $group) {
             $lines[] = '### DUP-'.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
             $lines[] = '';

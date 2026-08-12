@@ -18,6 +18,8 @@ class ExampleTest extends TestCase
         $response
             ->assertOk()
             ->assertViewIs('welcome')
-            ->assertSee('Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni');
+            ->assertSee('Tata Kelola dan Informasi Pendidikan Terintegrasi')
+            ->assertSee('Maskot TIFAA')
+            ->assertSee('tifaa-mascot-', false);
     }
 }

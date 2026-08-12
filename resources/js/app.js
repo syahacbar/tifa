@@ -73,7 +73,10 @@ window.tifaVoice = (onTranscript) => ({
 
         this.stopSpeaking();
 
-        const utterance = new SpeechSynthesisUtterance(answer);
+        // Keep the official all-caps brand in the UI, but use title case for
+        // browser speech engines so it is pronounced as one word.
+        const spokenAnswer = answer.replace(/\bTIFAA\b/g, 'Tifaa');
+        const utterance = new SpeechSynthesisUtterance(spokenAnswer);
         utterance.lang = 'id-ID';
         utterance.rate = 0.95;
         utterance.onstart = () => {
@@ -165,7 +168,7 @@ window.tifaAssistant = () => ({
             const payload = await request.json();
 
             if (!request.ok) {
-                throw new Error(payload.message ?? 'TIFA belum dapat menjawab pertanyaan ini.');
+                throw new Error(payload.message ?? 'TIFAA belum dapat menjawab pertanyaan ini.');
             }
 
             this.response = payload;
@@ -173,7 +176,7 @@ window.tifaAssistant = () => ({
             this.voice?.speak(payload.answer);
         } catch (error) {
             this.response = null;
-            this.error = error instanceof Error ? error.message : 'Terjadi gangguan saat menghubungi TIFA.';
+            this.error = error instanceof Error ? error.message : 'Terjadi gangguan saat menghubungi TIFAA.';
         } finally {
             this.isLoading = false;
         }

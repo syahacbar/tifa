@@ -30,6 +30,7 @@ class TeacherDataTool
         if ($data['operation'] === 'breakdown' && ($data['group_by'] === null || $data['top_n'] !== null)) throw new TeacherDataToolException('invalid_combination', 'Breakdown memerlukan group_by tanpa top_n.');
         if ($data['operation'] === 'ranking' && ($data['group_by'] === null || $data['top_n'] === null)) throw new TeacherDataToolException('invalid_combination', 'Ranking memerlukan group_by dan top_n.');
         $analytics = app(TeacherAnalyticsService::class)->query(['metric' => $data['metric'], 'filters' => $data['filters'], 'group_by' => $data['group_by'], 'top_n' => $data['top_n']]);
+        $analytics['comparison'] = (bool) ($contract['comparison'] ?? false);
         $quality = $this->quality($analytics, $data['group_by']);
         return ['version' => 'v1', 'status' => 'ok', 'operation' => $data['operation'], 'entity' => $data['entity'], 'metric' => $data['metric'], 'data' => isset($analytics['value']) ? ['value' => $analytics['value']] : $analytics['data'], 'context' => ['filters' => $analytics['filters'], 'group_by' => $analytics['group_by'], 'top_n' => $data['top_n']], 'provenance' => ['source' => 'teacher_authoritative_dataset', 'batch_id' => $analytics['batch']['id'], 'reference_period' => $analytics['batch']['source_period'], 'authoritative' => true], 'quality' => $quality, 'presentation' => $analytics];
     }

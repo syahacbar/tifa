@@ -21,7 +21,8 @@ class TeacherConversationTest extends TestCase
         $result = app(TifaAssistantService::class)->ask('Berapa guru PPPK di SD?');
         $this->assertSame('teacher_analytics', $result['intent']['type']);
         $this->assertSame(2, $result['data']['value']);
-        $this->assertStringContainsString('data pendidikan terintegrasi Kabupaten Teluk Bintuni', $result['answer']);
+        $this->assertSame('Jumlah guru PPPK pada jenjang SD di Kabupaten Teluk Bintuni sebanyak 2 orang.', $result['answer']);
+        Http::assertNothingSent();
     }
 
     public function test_privacy_request_is_not_a_teacher_analytics_result(): void
@@ -32,20 +33,33 @@ class TeacherConversationTest extends TestCase
     public function test_grouping_ranking_comparison_and_subject_labels_render_database_rows(): void
     {
         $batch = TeacherImportBatch::create(['source_filename' => 'group.xlsx', 'source_checksum' => hash('sha256', 'group'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
-        foreach ([['Bintuni','PNS','a'], ['Bintuni','PPPK','b'], ['Manimeri','PPPK','c'], ['Sumuri','PNS','d']] as [$district, $status, $fingerprint]) TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SD', 'source_row' => random_int(1000, 9999), 'source_fingerprint' => hash('sha256', uniqid('', true)), 'deduplication_fingerprint' => $fingerprint, 'school_resolution_status' => 'resolved', 'district' => $district, 'employment_status' => $status]);
+        foreach ([['Bintuni','PNS','a'], ['Bintuni','PPPK','b'], ['Manimeri','PPPK','c'], ['Sumuri','PNS','d'], ['Babo','PNS','e'], ['Tomu','PPPK','f']] as [$district, $status, $fingerprint]) TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SD', 'source_row' => random_int(1000, 9999), 'source_fingerprint' => hash('sha256', uniqid('', true)), 'deduplication_fingerprint' => $fingerprint, 'school_resolution_status' => 'resolved', 'district' => $district, 'employment_status' => $status]);
         $assistant = app(TifaAssistantService::class);
         $grouping = $assistant->ask('Tampilkan jumlah guru berdasarkan distrik.');
-        $this->assertStringContainsString('Bintuni 2 guru', $grouping['answer']);
-        $this->assertStringContainsString('Manimeri 1 guru', $grouping['answer']);
+        $this->assertStringContainsString('Jumlah guru berdasarkan distrik:', $grouping['answer']);
+        $this->assertStringContainsString('Bintuni (2 guru)', $grouping['answer']);
+        $this->assertStringContainsString('Manimeri (1 guru)', $grouping['answer']);
         $ranking = $assistant->ask('Sebutkan 3 distrik dengan guru terbanyak.');
-        $this->assertStringContainsString('Bintuni 2 guru', $ranking['answer']);
-        $this->assertStringContainsString('Manimeri 1 guru', $ranking['answer']);
+        $this->assertStringContainsString('3 distrik dengan jumlah guru terbanyak adalah', $ranking['answer']);
+        $this->assertStringContainsString('Bintuni (2 guru)', $ranking['answer']);
+        $this->assertStringContainsString('Manimeri (1 guru)', $ranking['answer']);
+        $topFive = $assistant->ask('Sebutkan 5 distrik dengan guru terbanyak.');
+        $this->assertSame(5, $topFive['intent']['top_n']);
+        foreach (['Bintuni', 'Babo', 'Manimeri', 'Sumuri', 'Tomu'] as $district) $this->assertStringContainsString($district.' (', $topFive['answer']);
         $comparison = $assistant->ask('Bandingkan jumlah guru PNS dan PPPK.');
-        $this->assertStringContainsString('PNS 2 guru', $comparison['answer']);
-        $this->assertStringContainsString('PPPK 2 guru', $comparison['answer']);
+        $this->assertStringContainsString('Perbandingan jumlah guru berdasarkan status kepegawaian:', $comparison['answer']);
+        $this->assertStringContainsString('PNS (3 guru)', $comparison['answer']);
+        $this->assertStringContainsString('PPPK (3 guru)', $comparison['answer']);
         $top = $assistant->ask('Distrik mana yang memiliki guru paling banyak?');
         $this->assertSame('teacher_analytics', $top['intent']['type']);
-        $this->assertStringContainsString('Bintuni sebanyak 2', $top['answer']);
+        $this->assertSame('Distrik dengan jumlah guru terbanyak adalah Bintuni (2 guru).', $top['answer']);
+        $this->assertStringNotContainsString('Berdasarkan data', $top['answer']);
+
+        $districtComparison = $assistant->ask('Bandingkan jumlah guru Bintuni dan Manimeri');
+        $this->assertSame('district', $districtComparison['intent']['group_by']);
+        $this->assertStringContainsString('Perbandingan jumlah guru berdasarkan distrik:', $districtComparison['answer']);
+        $this->assertStringContainsString('Bintuni (2 guru)', $districtComparison['answer']);
+        $this->assertStringContainsString('Manimeri (1 guru)', $districtComparison['answer']);
     }
 
     public function test_school_resolution_aliases_filters_and_school_rankings_are_deterministic(): void
@@ -65,7 +79,7 @@ class TeacherConversationTest extends TestCase
         $rank = $assistant->ask('Sebutkan 2 sekolah dengan guru terbanyak.');
         $this->assertSame('school', $rank['intent']['group_by']);
         $this->assertSame(2, $rank['intent']['top_n']);
-        $this->assertStringContainsString('SMA NEGERI 2 BINTUNI 2 guru', $rank['answer']);
+        $this->assertStringContainsString('SMA NEGERI 2 BINTUNI (2 guru)', $rank['answer']);
         $level = $assistant->ask('Berapa guru SMP?');
         $this->assertNull($level['intent']['filters']['school_id']);
         $this->assertSame('SMP', $level['intent']['filters']['education_level']);

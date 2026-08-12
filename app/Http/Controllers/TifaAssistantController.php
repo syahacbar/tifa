@@ -23,9 +23,9 @@ class TifaAssistantController extends Controller
         } catch (OllamaException) {
             return response()->json(['message' => 'Layanan Ollama tidak tersedia.'], 503);
         } catch (TifaIntentException) {
-            return response()->json(['message' => 'Pertanyaan tidak dapat dipahami sebagai query data TIFA.'], 422);
+            return response()->json(['message' => 'Pertanyaan tidak dapat dipahami sebagai query data TIFAA.'], 422);
         } catch (DatasetUnavailableException) {
-            return response()->json(['message' => 'Dataset aktif TIFA tidak tersedia.'], 404);
+            return response()->json(['message' => 'Dataset aktif TIFAA tidak tersedia.'], 404);
         }
     }
 }

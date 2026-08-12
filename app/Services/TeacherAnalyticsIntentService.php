@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\School;
+use App\Models\TeacherAssignment;
 
 class TeacherAnalyticsIntentService
 {
@@ -28,13 +29,14 @@ class TeacherAnalyticsIntentService
         $group = null; $top = null;
         if (preg_match('/(per|berdasarkan)\s+distrik/u', $text) || str_contains($text, 'distrik mana') || (str_contains($text, 'distrik') && (str_contains($text, 'terbanyak') || str_contains($text, 'paling banyak')))) $group = 'district';
         elseif (str_contains($text, 'bandingkan') && (str_contains($text, 'pns') || str_contains($text, 'pppk'))) { $group = 'employment_status'; $filters['employment_status'] = null; }
+        elseif (str_contains($text, 'bandingkan') && $this->mentionedDistrictCount($text) >= 2) $group = 'district';
         elseif (preg_match('/(per|berdasarkan)\s+jenjang/u', $text)) $group = 'education_level';
         elseif (preg_match('/(per|berdasarkan)\s+jenis ptk/u', $text)) $group = 'ptk_type';
         elseif (preg_match('/(per|berdasarkan)\s+sekolah/u', $text) || (str_contains($text, 'sekolah') && (str_contains($text, 'terbanyak') || str_contains($text, 'paling banyak')))) $group = 'school';
         $hasRankCount = preg_match('/\b(top|sebutkan)\s*(\d+)?/u', $text, $rankMatch) === 1;
         if ($group && (str_contains($text, 'terbanyak') || str_contains($text, 'paling banyak') || $hasRankCount)) $top = isset($rankMatch[2]) && $rankMatch[2] !== '' ? min(20, (int) $rankMatch[2]) : 1;
         $metric = preg_match('/\b(penugasan|assignment|record nominatif)\b/u', $text) ? 'assignment_count' : 'unique_teacher_count';
-        return ['version' => 'v1', 'operation' => $group ? ($top ? 'ranking' : 'breakdown') : 'count', 'entity' => $metric === 'assignment_count' ? 'teacher_assignment' : 'teacher_identity', 'metric' => $metric, 'filters' => $filters, 'group_by' => $group, 'top_n' => $top, 'confidence' => 'deterministic'];
+        return ['version' => 'v1', 'operation' => $group ? ($top ? 'ranking' : 'breakdown') : 'count', 'entity' => $metric === 'assignment_count' ? 'teacher_assignment' : 'teacher_identity', 'metric' => $metric, 'filters' => $filters, 'group_by' => $group, 'top_n' => $top, 'comparison' => $group !== null && str_contains($text, 'bandingkan'), 'confidence' => 'deterministic'];
     }
 
     private function school(string $text): ?School
@@ -76,5 +78,12 @@ class TeacherAnalyticsIntentService
     private function district(string $value): bool
     {
         return \App\Models\TeacherAssignment::query()->whereRaw('LOWER(TRIM(district)) = ?', [mb_strtolower(trim($value))])->exists();
+    }
+
+    private function mentionedDistrictCount(string $text): int
+    {
+        return TeacherAssignment::query()->select('district')->distinct()->pluck('district')
+            ->filter(fn (?string $district) => is_string($district) && $district !== '' && str_contains($text, mb_strtolower($district)))
+            ->count();
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Throwable;
 
 #[Signature('tifa:import-dapodik {file : Path workbook XLSX} {--dry-run : Validasi tanpa menulis ke database}')]
-#[Description('Import data sekolah dari workbook Dapodik ke dataset TIFA')]
+#[Description('Import data sekolah dari workbook Dapodik ke dataset TIFAA')]
 class ImportDapodikCommand extends Command
 {
     public function handle(DapodikImportService $importer): int

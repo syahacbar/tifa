@@ -30,7 +30,8 @@ class TifaAssistantEndpointTest extends TestCase
             'reference_period' => 'Semester 2 Tahun Pelajaran 2025/2026',
             'published_at' => '2026-06-30',
         ]);
-        School::factory()->count(88)->for($dataset)->create(['education_level' => 'SD']);
+        School::factory()->count(44)->for($dataset)->create(['education_level' => 'SD', 'status' => 'Negeri']);
+        School::factory()->count(44)->for($dataset)->create(['education_level' => 'SD', 'status' => 'Swasta']);
 
         Http::fake([
             '*' => Http::response([
@@ -50,7 +51,7 @@ class TifaAssistantEndpointTest extends TestCase
                     'district' => null,
                 ],
             ],
-            'answer' => 'Berdasarkan Data Pendidikan Terintegrasi Teluk Bintuni, terdapat 88 Sekolah Dasar di Kabupaten Teluk Bintuni.',
+            'answer' => 'Jumlah SD di Kabupaten Teluk Bintuni sebanyak 88 sekolah, terdiri dari 44 sekolah negeri dan 44 sekolah swasta.',
             'data' => ['value' => 88],
             'visualization' => 'kpi',
             'source' => [
@@ -74,7 +75,7 @@ class TifaAssistantEndpointTest extends TestCase
 
         $this->postJson('/api/tifa/ask', ['question' => 'Tampilkan semua sekolah.'])
             ->assertUnprocessable()
-            ->assertExactJson(['message' => 'Pertanyaan tidak dapat dipahami sebagai query data TIFA.']);
+            ->assertExactJson(['message' => 'Pertanyaan tidak dapat dipahami sebagai query data TIFAA.']);
     }
 
     public function test_it_returns_a_safe_error_when_ollama_fails(): void
@@ -156,6 +157,27 @@ class TifaAssistantEndpointTest extends TestCase
 
         $this->postJson('/api/tifa/ask', ['question' => 'Berapa jumlah sekolah?'])
             ->assertNotFound()
-            ->assertExactJson(['message' => 'Dataset aktif TIFA tidak tersedia.']);
+            ->assertExactJson(['message' => 'Dataset aktif TIFAA tidak tersedia.']);
+    }
+
+    public function test_local_school_counts_are_answer_first_and_include_district_composition(): void
+    {
+        $dataset = Dataset::factory()->active()->create();
+        School::factory()->count(7)->for($dataset)->create(['district' => 'Babo', 'education_level' => 'SD', 'status' => 'Negeri']);
+        School::factory()->count(4)->for($dataset)->create(['district' => 'Babo', 'education_level' => 'SD', 'status' => 'Swasta']);
+        School::factory()->count(38)->for($dataset)->create(['education_level' => 'SMP', 'status' => 'Negeri']);
+        Http::fake();
+
+        $district = $this->postJson('/api/tifa/ask', ['question' => 'Berapa jumlah sekolah di Distrik Babo?'])
+            ->assertOk()
+            ->assertJsonPath('data.value', 11);
+        $this->assertSame('Distrik Babo memiliki 11 sekolah, terdiri dari 7 sekolah negeri dan 4 sekolah swasta.', $district->json('answer'));
+
+        $level = $this->postJson('/api/tifa/ask', ['question' => 'Berapa jumlah SMP di Kabupaten Teluk Bintuni?'])
+            ->assertOk()
+            ->assertJsonPath('data.value', 38);
+        $this->assertSame('Jumlah SMP di Kabupaten Teluk Bintuni sebanyak 38 sekolah, terdiri dari 38 sekolah negeri dan 0 sekolah swasta.', $level->json('answer'));
+        $this->assertStringNotContainsString('Berdasarkan data', $level->json('answer'));
+        Http::assertNothingSent();
     }
 }

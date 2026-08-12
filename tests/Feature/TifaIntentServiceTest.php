@@ -95,7 +95,7 @@ class TifaIntentServiceTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('tidak sesuai schema TIFA');
+        $this->expectExceptionMessage('tidak sesuai schema TIFAA');
 
         app(TifaIntentService::class)->parse('Tampilkan semua sekolah.');
     }

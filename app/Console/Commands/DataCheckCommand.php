@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('tifa:data-check')]
-#[Description('Periksa ringkasan dan kualitas data pada dataset TIFA aktif')]
+#[Description('Periksa ringkasan dan kualitas data pada dataset TIFAA aktif')]
 class DataCheckCommand extends Command
 {
     public function handle(TifaDataChecker $checker): int
@@ -20,7 +20,7 @@ class DataCheckCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info('Pemeriksaan data TIFA (read-only)');
+        $this->info('Pemeriksaan data TIFAA (read-only)');
         $this->components->twoColumnDetail('Dataset aktif', $result['dataset']->name);
         $this->components->twoColumnDetail('Periode', $result['dataset']->reference_period ?? '-');
         $this->components->twoColumnDetail('Total sekolah', (string) $result['total_schools']);

@@ -231,11 +231,20 @@ class TifaDataService
         $column = self::AGGREGATE_ACTIONS[$action];
         $value = $column === null ? $schools->count() : (int) $schools->sum($column);
 
-        return [
+        $result = [
             ...$this->baseResult($dataset, $action, $filters),
             'value' => $value,
             'visualization' => 'kpi',
         ];
+
+        if ($action === 'school_count') {
+            $result['composition'] = [
+                'public_schools' => (clone $schools)->whereRaw('LOWER(TRIM(status)) = ?', ['negeri'])->count(),
+                'private_schools' => (clone $schools)->whereRaw('LOWER(TRIM(status)) = ?', ['swasta'])->count(),
+            ];
+        }
+
+        return $result;
     }
 
     /** @param array<string, ?string> $filters */

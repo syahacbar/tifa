@@ -1,6 +1,6 @@
-# TIFA
+# TIFAA
 
-TIFA adalah fondasi Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni. Tahap saat ini mencakup aplikasi Laravel, data sekolah Dapodik, inspeksi workbook, importer transaksional, dan pemeriksaan kualitas data.
+TIFAA (Tata Kelola dan Informasi Pendidikan Terintegrasi) adalah fondasi layanan informasi pendidikan Dinas Pendidikan Kabupaten Teluk Bintuni. Tahap saat ini mencakup aplikasi Laravel, data sekolah Dapodik, inspeksi workbook, importer transaksional, dan pemeriksaan kualitas data.
 
 ## Stack
 

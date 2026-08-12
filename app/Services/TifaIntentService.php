@@ -13,14 +13,14 @@ class TifaIntentService
     public function __construct(private OllamaClient $ollama) {}
 
     /**
-     * Ubah pertanyaan bahasa alami menjadi intent query TIFA yang aman.
+     * Ubah pertanyaan bahasa alami menjadi intent query TIFAA yang aman.
      *
      * @return array{action: string, filters: array{education_level: ?string, status: ?string, district: ?string}}
      */
     public function parse(string $question): array
     {
         if (config('services.tifa_ai.provider') !== 'ollama') {
-            throw new TifaIntentException('Provider AI TIFA yang dikonfigurasi tidak didukung.');
+            throw new TifaIntentException('Provider AI TIFAA yang dikonfigurasi tidak didukung.');
         }
 
         $rawIntent = $this->ollama->generate($this->prompt($question));
@@ -52,7 +52,7 @@ class TifaIntentService
                 'options.limit' => ['nullable', 'integer', 'min:1', 'max:20'],
             ])->validate();
         } catch (ValidationException $exception) {
-            throw new TifaIntentException('Respons intent Ollama tidak sesuai schema TIFA.', previous: $exception);
+            throw new TifaIntentException('Respons intent Ollama tidak sesuai schema TIFAA.', previous: $exception);
         }
 
         $result = [
@@ -81,7 +81,7 @@ class TifaIntentService
         $actions = implode(', ', TifaDataService::supportedActions());
 
         return <<<PROMPT
-Parser intent TIFA. Balas SATU JSON valid saja, tanpa markdown atau teks lain.
+Parser intent TIFAA (Tata Kelola dan Informasi Pendidikan Terintegrasi). Balas SATU JSON valid saja, tanpa markdown atau teks lain.
 Actions: {$actions}.
 Schema: {"action":"...","filters":{"education_level":null,"status":null,"district":null}}.
 Filter hanya education_level, status, district; gunakan kapital. "negeri"=NEGERI, "swasta"=SWASTA. Kabupaten Teluk Bintuni bukan distrik, jadi district=null.

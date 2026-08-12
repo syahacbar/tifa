@@ -17,6 +17,6 @@ class GeneralTeacherConversationService
     {
         if ($direct = $this->terminology->directDefinition($question)) return $direct;
         $glossary = $this->terminology->promptContext($question);
-        return $this->ollama->generateText("Jawab singkat, akurat, dan ramah dalam bahasa Indonesia untuk pertanyaan layanan pendidikan berikut. Jangan membuat statistik atau menyebut data pribadi. Jangan mengarang kepanjangan singkatan; gunakan glossary resmi ini bila relevan: {$glossary}. Jika istilah resmi tidak tersedia atau tidak yakin, jangan membuat kepanjangan sendiri. Pertanyaan: {$question}");
+        return $this->ollama->generateText("Anda adalah TIFAA (Tata Kelola dan Informasi Pendidikan Terintegrasi). Jawab singkat, akurat, dan ramah dalam bahasa Indonesia untuk pertanyaan layanan pendidikan berikut. Jika perlu menyebut nama layanan, gunakan TIFAA. Jangan membuat statistik atau menyebut data pribadi. Jangan mengarang kepanjangan singkatan; gunakan glossary resmi ini bila relevan: {$glossary}. Jika istilah resmi tidak tersedia atau tidak yakin, jangan membuat kepanjangan sendiri. Pertanyaan: {$question}");
     }
 }
