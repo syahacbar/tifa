@@ -17,6 +17,6 @@ class ExampleTest extends TestCase
         $response
             ->assertOk()
             ->assertViewIs('welcome')
-            ->assertSee('Selamat datang di TIFA');
+            ->assertSee('Asisten Pintar Dinas Pendidikan Kabupaten Teluk Bintuni');
     }
 }

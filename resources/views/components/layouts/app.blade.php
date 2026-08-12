@@ -9,12 +9,12 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen">
+    <body class="min-h-screen bg-sky-50">
         <div class="flex min-h-screen flex-col">
-            <header class="border-b border-slate-200 bg-white" x-data="{ open: false }">
+            <header class="border-b border-sky-100 bg-white/90 backdrop-blur" x-data="{ open: false }">
                 <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8" aria-label="Navigasi utama">
                     <a href="{{ route('home') }}" class="flex items-center gap-3">
-                        <span class="grid size-10 place-items-center rounded-xl bg-sky-700 font-bold text-white">T</span>
+                        <span class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 font-bold text-white shadow-lg shadow-sky-200">T</span>
                         <span>
                             <span class="block font-semibold leading-tight text-slate-950">TIFA</span>
                             <span class="block text-xs text-slate-500">Dinas Pendidikan Teluk Bintuni</span>
@@ -28,7 +28,7 @@
 
                     <div class="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
                         <a href="{{ route('home') }}" class="text-sky-700">Beranda</a>
-                        <span class="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">Tahap fondasi</span>
+                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Layanan data pendidikan</span>
                     </div>
                 </nav>
 
@@ -41,7 +41,7 @@
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-slate-200 bg-white">
+            <footer class="border-t border-sky-100 bg-white">
                 <div class="mx-auto max-w-7xl px-6 py-5 text-sm text-slate-500 lg:px-8">
                     &copy; {{ date('Y') }} Dinas Pendidikan Kabupaten Teluk Bintuni
                 </div>
