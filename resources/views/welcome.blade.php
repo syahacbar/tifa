@@ -10,7 +10,7 @@
                     <div class="relative z-10 min-w-0 max-w-[15rem] sm:max-w-[18rem] lg:max-w-[19rem]">
                         <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold tracking-[.12em] text-emerald-700"><span class="size-1.5 rounded-full bg-emerald-500"></span>TIFAA SIAP MELAYANI</div>
                         <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">Halo, saya TIFAA.</h1>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">Informasi pendidikan terintegrasi Kabupaten Teluk Bintuni.</p>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">Tata Kelola dan Informasi Pendidikan Terintegrasi Kabupaten Teluk Bintuni</p>
                     </div>
                     <div class="pointer-events-none absolute bottom-0 right-0 z-10" data-tifaa-mascot-state="idle">
                         <img src="{{ Vite::asset('resources/images/branding/tifaa-mascot.png') }}" alt="Maskot TIFAA" class="h-32 w-auto object-contain drop-shadow-md sm:h-40 lg:h-60 xl:h-[17rem]">

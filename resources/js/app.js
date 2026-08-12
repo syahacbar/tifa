@@ -2,116 +2,11 @@ import Alpine from 'alpinejs';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import districtBoundaryUrl from '../geojson/teluk-bintuni-districts.big.geojson?url';
+import { createTifaaVoice } from './tifa-voice';
 
 window.Alpine = Alpine;
 
-window.tifaVoice = (onTranscript) => ({
-    recognition: null,
-    recognitionSupported: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
-    synthesisSupported: 'speechSynthesis' in window,
-    isListening: false,
-    isSpeaking: false,
-    error: '',
-
-    startListening() {
-        this.error = '';
-
-        if (!this.recognitionSupported) {
-            this.error = 'Input suara belum didukung oleh browser ini. Silakan gunakan kolom teks.';
-
-            return;
-        }
-
-        this.stopSpeaking();
-
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.recognition = new Recognition();
-        this.recognition.lang = 'id-ID';
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
-
-        this.recognition.onstart = () => {
-            this.isListening = true;
-        };
-        this.recognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-                .map((result) => result[0].transcript)
-                .join(' ')
-                .trim();
-
-            this.isListening = false;
-
-            if (transcript !== '') {
-                onTranscript(transcript);
-            }
-        };
-        this.recognition.onerror = (event) => {
-            this.isListening = false;
-            this.error = this.recognitionError(event.error);
-        };
-        this.recognition.onend = () => {
-            this.isListening = false;
-        };
-
-        try {
-            this.recognition.start();
-        } catch (error) {
-            this.isListening = false;
-            this.error = 'Mikrofon belum dapat dimulai. Periksa izin mikrofon lalu coba lagi.';
-        }
-    },
-
-    cancelListening() {
-        this.recognition?.abort();
-        this.isListening = false;
-    },
-
-    speak(answer) {
-        if (!this.synthesisSupported || !answer) {
-            return;
-        }
-
-        this.stopSpeaking();
-
-        // Keep the official all-caps brand in the UI, but use title case for
-        // browser speech engines so it is pronounced as one word.
-        const spokenAnswer = answer.replace(/\bTIFAA\b/g, 'Tifaa');
-        const utterance = new SpeechSynthesisUtterance(spokenAnswer);
-        utterance.lang = 'id-ID';
-        utterance.rate = 0.95;
-        utterance.onstart = () => {
-            this.isSpeaking = true;
-        };
-        utterance.onend = () => {
-            this.isSpeaking = false;
-        };
-        utterance.onerror = () => {
-            this.isSpeaking = false;
-            this.error = 'Jawaban belum dapat dibacakan oleh browser ini.';
-        };
-
-        window.speechSynthesis.speak(utterance);
-    },
-
-    stopSpeaking() {
-        if (!this.synthesisSupported) {
-            return;
-        }
-
-        window.speechSynthesis.cancel();
-        this.isSpeaking = false;
-    },
-
-    recognitionError(error) {
-        return {
-            'not-allowed': 'Izin mikrofon ditolak. Izinkan akses mikrofon di browser untuk menggunakan input suara.',
-            'service-not-allowed': 'Layanan pengenalan suara tidak diizinkan oleh browser.',
-            'no-speech': 'Suara tidak terdeteksi. Coba ucapkan pertanyaan sekali lagi.',
-            'audio-capture': 'Mikrofon tidak ditemukan atau sedang digunakan aplikasi lain.',
-            network: 'Layanan pengenalan suara tidak dapat dihubungi. Silakan gunakan input teks.',
-        }[error] ?? 'Input suara belum dapat diproses. Silakan coba lagi atau gunakan input teks.';
-    },
-});
+window.tifaVoice = createTifaaVoice;
 
 window.tifaAssistant = () => ({
     question: '',
