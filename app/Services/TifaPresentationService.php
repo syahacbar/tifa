@@ -28,8 +28,16 @@ class TifaPresentationService
             return $this->chart('Sekolah Teratas', 'Sekolah', $this->rankingUnit($metric), $records);
         }
         return $this->chart(
-            $action === 'status_breakdown' ? 'Perbandingan Status Sekolah' : (($data['data']['limit'] ?? null) !== null ? count($records).' Distrik dengan Sekolah Terbanyak' : 'Sebaran Sekolah per Distrik'),
-            $action === 'status_breakdown' ? 'Status' : 'Distrik',
+            match ($action) {
+                'status_breakdown' => 'Perbandingan Status Sekolah',
+                'education_level_breakdown' => 'Jumlah Sekolah berdasarkan Jenjang',
+                default => ($data['data']['limit'] ?? null) !== null ? count($records).' Distrik dengan Sekolah Terbanyak' : 'Sebaran Sekolah per Distrik',
+            },
+            match ($action) {
+                'status_breakdown' => 'Status',
+                'education_level_breakdown' => 'Jenjang',
+                default => 'Distrik',
+            },
             'sekolah', $records,
         );
     }
@@ -48,6 +56,7 @@ class TifaPresentationService
         $title = match ($dimension) {
             'district' => ($data['comparison'] ?? false) ? 'Perbandingan Guru per Distrik' : (($data['top_n'] ?? null) !== null ? count($data['data']['records'] ?? []).' Distrik dengan Guru Terbanyak' : 'Sebaran Guru per Distrik'),
             'employment_status' => 'Guru berdasarkan Status Kepegawaian',
+            'education_level' => 'Guru berdasarkan Jenjang',
             'school' => 'Guru per Sekolah',
             default => 'Sebaran Guru',
         };

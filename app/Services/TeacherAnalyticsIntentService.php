@@ -40,7 +40,7 @@ class TeacherAnalyticsIntentService
         if (preg_match('/\b(nik|nip|nuptk|nomor hp|telepon|tanggal lahir|alamat)\b/u', $text)) return ['blocked' => 'privacy'];
         $filters = array_fill_keys(['education_level','district','school_id','employment_status','ptk_type','ptk_position','education'], null);
         foreach (['SD','SMP','SMA','SMK','PAUD','SKB'] as $level) if (preg_match('/\b'.mb_strtolower($level).'\b/u', $text)) $filters['education_level'] = $level;
-        if (str_contains($text, 'pppk')) $filters['employment_status'] = str_contains($text, 'tahap ii') ? 'PPPK Tahap II' : 'PPPK';
+        if (app(TeacherEmploymentStatusCatalog::class)->hasPppkTerm($text)) $filters['employment_status'] = str_contains($text, 'tahap ii') ? 'PPPK Tahap II' : 'PPPK';
         elseif (preg_match('/\bpns\b/u', $text)) $filters['employment_status'] = 'PNS';
         if (str_contains($text, 'kepala sekolah')) $filters['ptk_type'] = 'Kepala Sekolah';
         if (preg_match('/\b(s1|s2|d1|d2|d3|d4)\b/u', $text, $match)) $filters['education'] = mb_strtoupper($match[1]);
@@ -50,19 +50,20 @@ class TeacherAnalyticsIntentService
         if ($school) { $filters['school_id'] = $school->id; $filters['education_level'] = null; }
         $rankingLimit = $this->rankingLimit($text);
         $isRanking = $rankingLimit !== null || preg_match('/\b(?:terbanyak|paling banyak|paling sedikit|tersedikit|tertinggi|terbesar|terendah|terkecil|peringkat|ranking)\b/u', $text) === 1;
-        $isComparison = preg_match('/\b(?:bandingkan|perbandingan)\b/u', $text) === 1;
+        $isComparison = preg_match('/\b(?:bandingkan|perbandingan)\b/u', $text) === 1
+            || count(app(TeacherEmploymentStatusCatalog::class)->comparisonCategories($text)) >= 2;
         $comparisonValues = null;
         $group = null;
         if (preg_match('/\b(?:top\s+)?(?:\d+|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)\s+distrik\b/u', $text) || preg_match('/\b(?:distrik|daerah)\s+mana\b/u', $text)) $group = 'district';
         elseif ($isRanking && preg_match('/\b(?:sekolah|sd|smp|sma|smk)\b/u', $text) && ! preg_match('/\b(?:distrik|daerah)\s+mana\b/u', $text)) $group = 'school';
         elseif (preg_match('/(per|berdasarkan)\s+distrik/u', $text) || (str_contains($text, 'distrik') && (str_contains($text, 'terbanyak') || str_contains($text, 'paling banyak')))) $group = 'district';
-        elseif ($isComparison && (str_contains($text, 'pns') || str_contains($text, 'pppk'))) { $group = 'employment_status'; $filters['employment_status'] = null; }
+        elseif ($isComparison && (preg_match('/\bpns\b/u', $text) || app(TeacherEmploymentStatusCatalog::class)->hasPppkTerm($text))) { $group = 'employment_status'; $filters['employment_status'] = null; }
         elseif ($isComparison) {
             $comparisonValues = $this->comparisonValues($text, 'district');
             if (count($comparisonValues) < 2) throw new SemanticQueryValidationException('Comparison membutuhkan dua distrik yang dapat dikenali.');
             $group = 'district';
         }
-        elseif (preg_match('/(per|berdasarkan)\s+jenjang/u', $text)) $group = 'education_level';
+        elseif (preg_match('/(?:per|berdasarkan|setiap)\s+jenjang(?:\s+pendidikan)?/u', $text)) $group = 'education_level';
         elseif (preg_match('/(?:per|berdasarkan)\s+status\s+kepegawaian/u', $text)) $group = 'employment_status';
         elseif (preg_match('/(per|berdasarkan)\s+jenis ptk/u', $text)) $group = 'ptk_type';
         elseif (preg_match('/(per|berdasarkan)\s+sekolah/u', $text) || ($isRanking && (str_contains($text, 'sekolah') || $filters['education_level'] !== null))) $group = 'school';
@@ -104,7 +105,7 @@ class TeacherAnalyticsIntentService
         $filters = $context['filters'];
         foreach (['SD','SMP','SMA','SMK','PAUD','SKB'] as $level) if (preg_match('/\b'.mb_strtolower($level).'\b/u', $text)) $filters['education_level'] = $level;
         foreach (['sekolah dasar' => 'SD', 'sekolah menengah pertama' => 'SMP', 'sekolah menengah atas' => 'SMA'] as $alias => $level) if (str_contains($text, $alias)) $filters['education_level'] = $level;
-        if (str_contains($text, 'pppk')) $filters['employment_status'] = 'PPPK'; elseif (preg_match('/\bpns\b/u', $text)) $filters['employment_status'] = 'PNS';
+        if (app(TeacherEmploymentStatusCatalog::class)->hasPppkTerm($text)) $filters['employment_status'] = 'PPPK'; elseif (preg_match('/\bpns\b/u', $text)) $filters['employment_status'] = 'PNS';
         if (preg_match('/\bdi\s+(?:distrik\s+)?([\pL\s]+?)(?:\?|$)/u', $text, $match)) $filters['district'] = trim($match[1]);
         $top = preg_match('/\b(lima|5)\s+(terbesar|terbanyak)/u', $text) ? 5 : ((str_contains($text, 'terbesar') || str_contains($text, 'terbanyak')) ? 1 : $context['top_n']);
         $group = $context['group_by']; if ($top && $group === null) $group = 'district';
@@ -145,7 +146,7 @@ class TeacherAnalyticsIntentService
     /** @return array<int, string> */
     private function comparisonValues(string $text, ?string $group): array
     {
-        if ($group === 'employment_status') return array_values(array_filter(['PNS', 'PPPK'], fn (string $value) => str_contains($text, mb_strtolower($value))));
+        if ($group === 'employment_status') return app(TeacherEmploymentStatusCatalog::class)->comparisonCategories($text);
         if ($group === 'district') return TeacherAssignment::query()->select('district')->distinct()->pluck('district')
             ->filter(fn (?string $district) => is_string($district) && $district !== '' && str_contains($text, mb_strtolower($district)))->values()->all();
 

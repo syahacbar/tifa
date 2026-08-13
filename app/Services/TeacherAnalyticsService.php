@@ -38,7 +38,7 @@ class TeacherAnalyticsService
         $rows = $comparisonValues !== null
             ? $this->comparison($query, $metric, $group, $comparisonValues)
             : $this->breakdown($query, $metric, $group, $data['top_n'] ?? null, $sort['direction'] ?? 'desc');
-        return $result + ['data' => ['records' => $rows], 'visualization' => ($data['top_n'] ?? null) ? 'bar_chart' : 'table'];
+        return $result + ['data' => ['records' => $rows], 'visualization' => (($data['top_n'] ?? null) || $comparisonValues !== null) ? 'bar_chart' : 'table'];
     }
 
     /** @param array<string, mixed> $filters */
@@ -79,7 +79,12 @@ class TeacherAnalyticsService
         return collect($values)->map(function (string $value) use ($query, $metric, $dimension): array {
             $scoped = clone $query;
             if ($dimension === 'school') $scoped->whereHas('school', fn ($schools) => $schools->where('name', $value));
-            else $scoped->whereRaw("LOWER(TRIM({$dimension})) = ?", [mb_strtolower(trim($value))]);
+            elseif ($dimension === 'employment_status') {
+                $statuses = app(TeacherEmploymentStatusCatalog::class)->sourceStatusesFor($value);
+                $statuses === []
+                    ? $scoped->whereRaw('1 = 0')
+                    : $scoped->whereIn('employment_status', $statuses);
+            } else $scoped->whereRaw("LOWER(TRIM({$dimension})) = ?", [mb_strtolower(trim($value))]);
 
             return ['label' => $value, 'value' => $this->metric($scoped, $metric)];
         })->all();

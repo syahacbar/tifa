@@ -15,6 +15,9 @@ class TifaLocalDataIntentService
         if ($this->isSchoolDistrictRanking($text, $question, $match)) {
             return ['action' => 'district_breakdown', 'filters' => ['education_level' => $this->educationLevel($text), 'status' => $this->status($text), 'district' => null], 'options' => ['limit' => (int) $match[1]]];
         }
+        if ($this->isSchoolEducationLevelBreakdown($text)) {
+            return ['action' => 'education_level_breakdown', 'filters' => ['education_level' => null, 'status' => $this->status($text), 'district' => $this->district($question)]];
+        }
         if ($this->isSchoolList($question, $text)) {
             return ['action' => 'school_list', 'filters' => ['education_level' => $this->educationLevel($text), 'status' => $this->status($text), 'district' => $this->district($question)]];
         }
@@ -77,11 +80,20 @@ class TifaLocalDataIntentService
 
     private function district(string $question): ?string
     {
-        if (preg_match('/\b(?:di\s+)?distrik\s+([\pL\s]+?)(?:[?.!]|$)/iu', $question, $match)) return trim($match[1]) ?: null;
+        if (preg_match('/\b(?:di\s+)?distrik\s+([\pL\s]+?)(?:[?.!]|$)/iu', $question, $match)) {
+            return $this->trimDistrictQualifier($match[1]);
+        }
         if (! preg_match('/\bdi\s+([\pL]+)(?:[?.!]|$)/iu', $question, $match)) return null;
 
         $district = trim($match[1]);
         return in_array(mb_strtolower($district), ['kabupaten', 'teluk'], true) ? null : ($district ?: null);
+    }
+
+    private function trimDistrictQualifier(string $district): ?string
+    {
+        $district = trim((string) preg_replace('/\s+berdasarkan\s+jenjang\b.*$/iu', '', $district));
+
+        return $district === '' ? null : $district;
     }
 
     private function isSchoolList(string $question, string $text): bool
@@ -102,6 +114,13 @@ class TifaLocalDataIntentService
         return preg_match('/\b(?:sebutkan|tampilkan|top)\s+(\d+)\s+distrik\b/u', $text, $match)
             && preg_match('/\bsekolah\b/u', $text) === 1
             && preg_match('/\b(?:terbanyak|teratas)\b/u', $text) === 1;
+    }
+
+    private function isSchoolEducationLevelBreakdown(string $text): bool
+    {
+        return preg_match('/\bsekolah\b/u', $text) === 1
+            && preg_match('/\bjenjang(?:\s+pendidikan)?\b/u', $text) === 1
+            && preg_match('/\b(?:setiap|berdasarkan)\b/u', $text) === 1;
     }
 
     private function isSchoolStatusBreakdown(string $text): bool

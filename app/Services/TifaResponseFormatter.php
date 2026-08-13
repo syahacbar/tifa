@@ -26,6 +26,19 @@ class TifaResponseFormatter
             return "Tidak ditemukan data {$metric} berdasarkan {$dimension}.";
         }
 
+        if (($data['group_by'] ?? null) === 'employment_status' && ($data['comparison'] ?? false)) {
+            $answer = 'Jumlah '.$metric.' berdasarkan status kepegawaian terdiri dari '.$this->employmentStatusRows($records, $metric).'.';
+            if (in_array('Kontrak', $data['unavailable_categories'] ?? [], true)) {
+                $answer .= ' Kategori guru kontrak tidak tersedia atau belum teridentifikasi pada dataset aktif.';
+            }
+
+            return $answer;
+        }
+
+        if (($data['comparison'] ?? false) && count($records) >= 2) {
+            return "Perbandingan jumlah {$metric} berdasarkan {$dimension}: {$this->rows($records, $metric, ' dan ')}.";
+        }
+
         if (($data['visualization'] ?? '') === 'bar_chart') {
             $count = count($records);
             $direction = $data['sort']['direction'] ?? 'desc';
@@ -40,14 +53,6 @@ class TifaResponseFormatter
                 "{$count} {$dimension} dengan jumlah {$metric} {$extreme} adalah {$this->rows($records, $metric)}.",
                 $data,
             );
-        }
-
-        if (($data['group_by'] ?? null) === 'employment_status' && count($records) === 2) {
-            return "Perbandingan jumlah {$metric} berdasarkan status kepegawaian: {$this->rows($records, $metric, ' dan ')}.";
-        }
-
-        if (($data['comparison'] ?? false) && count($records) >= 2) {
-            return "Perbandingan jumlah {$metric} berdasarkan {$dimension}: {$this->rows($records, $metric, ' dan ')}.";
         }
 
         return $this->withTeacherQuality(
@@ -90,6 +95,16 @@ class TifaResponseFormatter
         ));
     }
 
+    /** @param array<int, array{label:string,value:int}> $rows */
+    private function employmentStatusRows(array $rows, string $metric): string
+    {
+        $parts = array_map(fn (array $row) => $row['label'].' sebanyak '.$this->number((int) $row['value']).' '.$metric, $rows);
+        if (count($parts) <= 1) return $parts[0] ?? '';
+        if (count($parts) === 2) return implode(' dan ', $parts);
+
+        return implode(', ', array_slice($parts, 0, -1)).', dan '.end($parts);
+    }
+
     /** @param array<string, mixed> $intent
      * @param array<string, mixed> $data
      */
@@ -111,7 +126,7 @@ class TifaResponseFormatter
             'district_breakdown' => ($data['data']['limit'] ?? null) !== null
                 ? count($records).' distrik dengan jumlah sekolah terbanyak adalah '.$this->schoolRows($records).'.'
                 : 'Jumlah sekolah berdasarkan distrik: '.$this->schoolRows($records).'.',
-            'education_level_breakdown' => 'Jumlah sekolah berdasarkan jenjang: '.$this->schoolRows($records).'.',
+            'education_level_breakdown' => $this->educationLevelBreakdownAnswer($records, $intent['filters']),
             'status_breakdown' => 'Perbandingan jumlah sekolah negeri dan swasta: '.$this->schoolRows($records, ' dan ').'.',
         };
     }
@@ -143,6 +158,19 @@ class TifaResponseFormatter
         ));
 
         return count($records).' sekolah dengan '.$metric.' terbanyak adalah '.$rows.'.';
+    }
+
+    /** @param array<int, array{label:string,value:int}> $records
+     * @param array{education_level: ?string, status: ?string, district: ?string} $filters
+     */
+    private function educationLevelBreakdownAnswer(array $records, array $filters): string
+    {
+        $rows = $this->schoolRows($records);
+        if ($filters['district'] !== null) {
+            return 'Distrik '.$this->title($filters['district']).' memiliki sekolah pada setiap jenjang sebagai berikut: '.$rows.'.';
+        }
+
+        return 'Jumlah sekolah berdasarkan jenjang: '.$rows.'.';
     }
 
     /** @param array<int, array{label:string,value:int}> $records */

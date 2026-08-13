@@ -54,9 +54,9 @@ class TeacherConversationTest extends TestCase
         $this->assertSame(5, $topFive['intent']['top_n']);
         foreach (['Bintuni', 'Babo', 'Manimeri', 'Sumuri', 'Tomu'] as $district) $this->assertStringContainsString($district.' (', $topFive['answer']);
         $comparison = $assistant->ask('Bandingkan jumlah guru PNS dan PPPK.');
-        $this->assertStringContainsString('Perbandingan jumlah guru berdasarkan status kepegawaian:', $comparison['answer']);
-        $this->assertStringContainsString('PNS (3 guru)', $comparison['answer']);
-        $this->assertStringContainsString('PPPK (3 guru)', $comparison['answer']);
+        $this->assertStringContainsString('Jumlah guru berdasarkan status kepegawaian terdiri dari', $comparison['answer']);
+        $this->assertStringContainsString('PNS sebanyak 3 guru', $comparison['answer']);
+        $this->assertStringContainsString('PPPK sebanyak 3 guru', $comparison['answer']);
         $top = $assistant->ask('Distrik mana yang memiliki guru paling banyak?');
         $this->assertSame('teacher_analytics', $top['intent']['type']);
         $this->assertSame('Distrik dengan jumlah guru terbanyak adalah Bintuni (2 guru).', $top['answer']);
