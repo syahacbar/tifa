@@ -15,19 +15,17 @@ window.tifaAssistant = () => ({
     error: '',
     isLoading: false,
     voice: null,
-    quickQuestionPage: 0,
-    quickQuestionPageSize: 5,
     quickQuestions: [
-        'Berapa jumlah sekolah di Kabupaten Teluk Bintuni?',
-        'Berapa jumlah sekolah di Distrik Bintuni?',
-        'Berapa jumlah SD di Kabupaten Teluk Bintuni?',
-        'Berapa jumlah sekolah negeri?',
-        'Berapa jumlah guru di Kabupaten Teluk Bintuni?',
-        'Sebutkan 5 distrik dengan jumlah guru terbanyak.',
-        'Berapa jumlah guru PPPK di Kabupaten Teluk Bintuni?',
-        'Berapa jumlah siswa di Kabupaten Teluk Bintuni?',
-        'Berapa total siswa SD?',
-        'Berapa laboratorium SMP?',
+        { label: 'Sekolah negeri & swasta', question: 'Berapa jumlah sekolah negeri dan swasta di Kabupaten Teluk Bintuni?' },
+        { label: 'Jumlah siswa Teluk Bintuni', question: 'Berapa jumlah siswa di Kabupaten Teluk Bintuni?' },
+        { label: 'Sekolah di Distrik Babo', question: 'Tampilkan sekolah yang ada di Distrik Babo.' },
+        { label: 'Guru PNS jenjang SMP', question: 'Berapa jumlah guru PNS yang mengajar di tingkat SMP?' },
+        { label: 'SD di Distrik Tuhiba', question: 'Tampilkan SD di Distrik Tuhiba.' },
+        { label: '5 SD guru terbanyak', question: 'Tampilkan 5 SD dengan jumlah guru terbanyak.' },
+        { label: 'SMP di Distrik Sumuri', question: 'Tampilkan SMP di Distrik Sumuri.' },
+        { label: 'Guru di Distrik Bintuni', question: 'Berapa jumlah guru di Distrik Bintuni?' },
+        { label: '5 distrik guru terbanyak', question: 'Sebutkan 5 distrik dengan jumlah guru terbanyak.' },
+        { label: 'Guru berdasarkan status', question: 'Berapa jumlah guru berdasarkan status kepegawaian?' },
     ],
 
     init() {
@@ -84,22 +82,7 @@ window.tifaAssistant = () => ({
         this.error = '';
         this.question = '';
         this.teacherContext = null;
-        this.quickQuestionPage = 0;
         this.$nextTick(() => this.$refs.question.focus());
-    },
-
-    visibleQuickQuestions() {
-        const start = this.quickQuestionPage * this.quickQuestionLimit();
-
-        return this.quickQuestions.slice(start, start + this.quickQuestionLimit());
-    },
-
-    quickQuestionPageCount() {
-        return Math.ceil(this.quickQuestions.length / this.quickQuestionLimit());
-    },
-
-    changeQuickQuestionPage(direction) {
-        this.quickQuestionPage = (this.quickQuestionPage + direction + this.quickQuestionPageCount()) % this.quickQuestionPageCount();
     },
 
     formattedValue() {
@@ -124,9 +107,6 @@ window.tifaAssistant = () => ({
         return this.isLoading || this.response !== null || this.error !== '';
     },
 
-    quickQuestionLimit() {
-        return this.isResponseState() ? 3 : this.quickQuestionPageSize;
-    },
 });
 
 // The only non-exact mapping approved for this snapshot. Source values stay unchanged.

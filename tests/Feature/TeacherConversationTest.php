@@ -186,6 +186,48 @@ class TeacherConversationTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_an_explicit_top_n_district_request_replaces_a_previous_top_one_context(): void
+    {
+        $batch = TeacherImportBatch::create(['source_filename' => 'district-ranking.xlsx', 'source_checksum' => hash('sha256', 'district-ranking'), 'reference_period' => 'Maret 2026', 'is_authoritative' => true]);
+        $sourceRow = 500000;
+        foreach ([['Bintuni', 10], ['Manimeri', 9], ['Sumuri', 8], ['Babo', 7], ['Tomu', 6], ['Kuri', 5], ['Wamesa', 4], ['Moskona Utara', 3], ['Moskona Selatan', 2], ['Tembuni', 1]] as [$district, $total]) {
+            for ($index = 0; $index < $total; $index++) {
+                TeacherAssignment::create(['teacher_import_batch_id' => $batch->id, 'source_sheet' => 'SD', 'source_row' => $sourceRow++, 'source_fingerprint' => hash('sha256', $district.'-source-'.$index), 'deduplication_fingerprint' => hash('sha256', $district.'-teacher-'.$index), 'school_resolution_status' => 'resolved', 'district' => $district]);
+            }
+        }
+        Http::fake();
+
+        $assistant = app(TifaAssistantService::class);
+        $topOne = $assistant->ask('Distrik mana yang memiliki guru terbanyak?');
+        $response = $this->postJson('/api/tifa/ask', [
+            'question' => 'Sebutkan 5 distrik dengan jumlah guru terbanyak.',
+            'teacher_context' => $topOne['teacher_context'],
+        ])->assertOk();
+
+        $response->assertJsonPath('intent.type', 'teacher_analytics')
+            ->assertJsonPath('intent.operation', 'ranking')
+            ->assertJsonPath('intent.group_by', 'district')
+            ->assertJsonPath('intent.top_n', 5)
+            ->assertJsonPath('presentation.type', 'bar_chart')
+            ->assertJsonPath('presentation.title', '5 Distrik dengan Guru Terbanyak');
+        $this->assertCount(5, $response->json('data.records'));
+        $this->assertCount(5, $response->json('presentation.data'));
+        foreach ([['Bintuni', 10], ['Manimeri', 9], ['Sumuri', 8], ['Babo', 7], ['Tomu', 6]] as [$district, $value]) {
+            $this->assertStringContainsString("{$district} ({$value} guru)", $response->json('answer'));
+        }
+        foreach ([
+            'Sebutkan 3 distrik dengan guru terbanyak.' => 3,
+            'Sebutkan 10 distrik dengan guru terbanyak.' => 10,
+            'Distrik mana yang memiliki guru terbanyak?' => 1,
+        ] as $question => $expectedCount) {
+            $result = $assistant->ask($question);
+            $this->assertSame($expectedCount, $result['intent']['top_n'], $question);
+            $this->assertCount($expectedCount, $result['data']['records'], $question);
+            $this->assertCount($expectedCount, $result['presentation']['data'], $question);
+        }
+        Http::assertNothingSent();
+    }
+
     public function test_privacy_guard_returns_immediately_without_ollama_request(): void
     {
         Http::fake();

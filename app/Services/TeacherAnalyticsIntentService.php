@@ -114,7 +114,7 @@ class TeacherAnalyticsIntentService
 
     private function isFollowUp(string $text): bool
     {
-        return preg_match('/^(kalau|yang|lima|5|di )/u', $text) === 1 || str_contains($text, 'terbesar') || str_contains($text, 'terbanyak');
+        return preg_match('/^(?:kalau|yang|lima|5|di\b|terbesar\b|terbanyak\b|paling\s+banyak\b)/u', $text) === 1;
     }
 
     private function normalize(string $name): string

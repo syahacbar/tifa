@@ -53,6 +53,8 @@ class TifaAssistantService
         $tool = $this->teacherTool->execute($teacherContract);
         $data = $tool['presentation'];
         $data['quality'] = $tool['quality'];
+        $data['top_n'] = $teacherContract['top_n'];
+        $data['comparison'] = $teacherContract['comparison'];
 
         return ['question' => $question, 'intent' => ['type' => 'teacher_analytics', ...$teacherContract], 'answer' => $this->formatter->formatTeacher($data), 'data' => $tool['data'], 'presentation' => $this->presentation->forTeacher($data), 'visualization' => $data['visualization'], 'source' => ['reference_period' => $tool['provenance']['reference_period'], 'authoritative' => true], 'teacher_context' => $this->teacherContext->fromIntent($teacherContract)];
     }

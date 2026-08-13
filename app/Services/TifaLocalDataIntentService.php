@@ -77,8 +77,8 @@ class TifaLocalDataIntentService
 
     private function district(string $question): ?string
     {
-        if (preg_match('/\b(?:di\s+)?distrik\s+([\pL\s]+?)(?:\?|$)/iu', $question, $match)) return trim($match[1]) ?: null;
-        if (! preg_match('/\bdi\s+([\pL]+)(?:\?|$)/iu', $question, $match)) return null;
+        if (preg_match('/\b(?:di\s+)?distrik\s+([\pL\s]+?)(?:[?.!]|$)/iu', $question, $match)) return trim($match[1]) ?: null;
+        if (! preg_match('/\bdi\s+([\pL]+)(?:[?.!]|$)/iu', $question, $match)) return null;
 
         $district = trim($match[1]);
         return in_array(mb_strtolower($district), ['kabupaten', 'teluk'], true) ? null : ($district ?: null);

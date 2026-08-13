@@ -9,31 +9,32 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-sky-50 lg:h-screen lg:overflow-hidden">
+    <body class="min-h-screen bg-[#f3f8fb] lg:h-screen lg:overflow-hidden">
         <div class="flex min-h-screen flex-col lg:h-screen">
-            <header class="border-b border-sky-100 bg-white/90 backdrop-blur" x-data="{ open: false }">
-                <nav class="mx-auto flex max-w-[1600px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Navigasi utama">
+            <header class="relative border-b-2 border-cyan-400 bg-gradient-to-r from-[#082f49] via-[#0b3d5c] to-[#0e4a68] shadow-[0_8px_20px_-16px_rgba(8,47,73,.8)]" x-data="{ open: false }">
+                <div aria-hidden="true" class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-300/80 to-transparent"></div>
+                <nav class="mx-auto flex max-w-[1600px] items-center justify-between px-4 py-2.5 sm:px-6 lg:px-8" aria-label="Navigasi utama">
                     <a href="{{ route('home') }}" class="flex items-center gap-3">
-                        <span class="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 font-bold text-white shadow-lg shadow-sky-200">T</span>
+                        <span class="grid size-9 place-items-center rounded-xl border border-cyan-200/30 bg-gradient-to-br from-sky-400 to-cyan-500 font-bold text-white shadow-md shadow-slate-950/20">T</span>
                         <span>
-                            <span class="block font-semibold leading-tight text-slate-950">TIFAA</span>
-                            <span class="block text-xs text-slate-500">Tata Kelola dan Informasi Pendidikan Terintegrasi</span>
+                            <span class="block font-extrabold leading-tight tracking-wide text-white">TIFAA</span>
+                            <span class="block text-xs text-sky-100/80">Tata Kelola dan Informasi Pendidikan Terintegrasi</span>
                         </span>
                     </a>
 
-                    <button type="button" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" @click="open = ! open" :aria-expanded="open" aria-controls="mobile-menu">
+                    <button type="button" class="rounded-lg p-2 text-sky-50 hover:bg-white/10 md:hidden" @click="open = ! open" :aria-expanded="open" aria-controls="mobile-menu">
                         <span class="sr-only">Buka navigasi</span>
                         <span aria-hidden="true" class="text-xl">&#9776;</span>
                     </button>
 
-                    <div class="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-                        <a href="{{ route('home') }}" class="text-sky-700">Beranda</a>
-                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Layanan data pendidikan</span>
+                    <div class="hidden items-center gap-6 text-sm font-medium text-sky-100 md:flex">
+                        <a href="{{ route('home') }}" class="text-white">Beranda</a>
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-100"><span class="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,.12)]"></span>Sistem Aktif</span>
                     </div>
                 </nav>
 
-                <div id="mobile-menu" class="border-t border-slate-100 px-6 py-3 md:hidden" x-cloak x-show="open" x-transition>
-                    <a href="{{ route('home') }}" class="block py-2 text-sm font-medium text-sky-700">Beranda</a>
+                <div id="mobile-menu" class="border-t border-white/10 bg-[#082f49] px-6 py-3 md:hidden" x-cloak x-show="open" x-transition>
+                    <a href="{{ route('home') }}" class="block py-2 text-sm font-medium text-white">Beranda</a>
                 </div>
             </header>
 
