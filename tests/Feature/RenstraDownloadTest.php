@@ -18,8 +18,6 @@ class RenstraDownloadTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Lihat Renstra')
-            ->assertSee('openRenstra()', false)
             ->assertSee('role="dialog"', false)
             ->assertSee('z-[2100]', false)
             ->assertSee('bg-slate-950/65', false)

@@ -60,18 +60,10 @@
                         <span aria-hidden="true" class="text-xl">&#9776;</span>
                     </button>
 
-                    <div class="hidden items-center gap-5 text-sm font-medium text-sky-100 md:flex">
+                    <div class="hidden items-center gap-6 text-sm font-medium text-sky-100 md:flex">
                         <a href="{{ route('home') }}" class="text-white hover:text-cyan-200 transition">Beranda</a>
                         <a href="#ruang-informasi" class="text-sky-100/90 hover:text-white transition">Ruang Informasi</a>
                         <a href="#pengaduan" class="text-sky-100/90 hover:text-white transition">Pengaduan Layanan</a>
-                        <button x-ref="renstraButton" type="button" @click="openRenstra()" aria-label="Lihat Renstra Dinas Pendidikan Kabupaten Teluk Bintuni" class="inline-flex items-center gap-1.5 rounded-lg border border-sky-100/35 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-sky-50 transition hover:border-sky-100/60 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-sky-950">
-                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M8 13h8M8 17h6"/></svg>
-                            <span class="hidden lg:inline">Lihat Renstra</span>
-                            <span class="lg:hidden">Renstra</span>
-                        </button>
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-100">
-                            <span class="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,.12)]"></span>Sistem Aktif
-                        </span>
                     </div>
                 </nav>
 
@@ -79,10 +71,6 @@
                     <a href="{{ route('home') }}" class="block py-2 text-sm font-medium text-white">Beranda</a>
                     <a href="#ruang-informasi" @click="open = false" class="block py-2 text-sm font-medium text-sky-100">Ruang Informasi</a>
                     <a href="#pengaduan" @click="open = false" class="block py-2 text-sm font-medium text-sky-100">Pengaduan Layanan</a>
-                    <button type="button" @click="open = false; openRenstra()" aria-label="Lihat Renstra Dinas Pendidikan Kabupaten Teluk Bintuni" class="inline-flex items-center gap-2 py-2 text-sm font-medium text-sky-50">
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M8 13h8M8 17h6"/></svg>
-                        Lihat Renstra
-                    </button>
                 </div>
 
                 <!-- Reusable PDF Viewer Modal -->
