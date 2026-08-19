@@ -17,9 +17,23 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => 'password',
+            ]
+        );
+
+        if (file_exists(public_path('documents/renstra-dinas-pendidikan-teluk-bintuni.pdf'))) {
+            \App\Models\PublicDocument::firstOrCreate(
+                ['file_path' => 'documents/renstra-dinas-pendidikan-teluk-bintuni.pdf'],
+                [
+                    'title' => 'Rencana Strategis (Renstra) Dinas Pendidikan Kabupaten Teluk Bintuni',
+                    'is_active' => true,
+                    'published_at' => '2021-01-01',
+                ]
+            );
+        }
     }
 }

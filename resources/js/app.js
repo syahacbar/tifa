@@ -408,4 +408,82 @@ window.tifaMapFilters = () => ({
     },
 });
 
+window.tifaPublicDocuments = (initialData = {}) => ({
+    documents: [],
+    currentPage: 1,
+    lastPage: 1,
+    total: 0,
+    isLoading: false,
+    fetchError: null,
+
+    init() {
+        const scriptEl = document.getElementById('tifa-public-documents-data');
+        if (scriptEl && scriptEl.textContent.trim()) {
+            try {
+                this.documents = JSON.parse(scriptEl.textContent);
+            } catch (e) {
+                this.documents = [];
+            }
+        } else if (initialData.documents) {
+            this.documents = initialData.documents;
+        }
+
+        const countEl = document.getElementById('tifa-public-documents-total');
+        if (countEl) {
+            this.total = parseInt(countEl.textContent || '0', 10) || this.documents.length;
+        } else {
+            this.total = initialData.total || this.documents.length;
+        }
+
+        this.lastPage = Math.max(1, Math.ceil(this.total / 6));
+        this.currentPage = initialData.currentPage || 1;
+    },
+
+    async loadPage(page) {
+        if (page < 1 || page > this.lastPage || this.isLoading) return;
+        this.isLoading = true;
+        this.fetchError = null;
+
+        try {
+            const res = await fetch(`/api/ruang-informasi?page=${page}`);
+            if (!res.ok) {
+                throw new Error('Gagal memuat dokumen');
+            }
+            const data = await res.json();
+            this.documents = data.data || [];
+            this.currentPage = data.current_page;
+            this.lastPage = data.last_page;
+            this.total = data.total;
+        } catch (err) {
+            this.fetchError = 'Gagal memuat dokumen. Silakan coba lagi.';
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.loadPage(this.currentPage - 1);
+        }
+    },
+
+    nextPage() {
+        if (this.currentPage < this.lastPage) {
+            this.loadPage(this.currentPage + 1);
+        }
+    },
+
+    openDocument(doc) {
+        window.dispatchEvent(new CustomEvent('open-pdf', {
+            detail: {
+                title: doc.title,
+                file: doc.file || doc.file_url,
+                downloadName: doc.download_name,
+            }
+        }));
+    },
+});
+
 Alpine.start();
+
+
